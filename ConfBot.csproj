@@ -6,7 +6,6 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>ConfBot</RootNamespace>
     <AssemblyName>ConfBot</AssemblyName>
-    <StartArguments>AutmConference.config</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -15,7 +14,6 @@
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <StartAction>Project</StartAction>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -27,12 +25,13 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
-    <Reference Include="jabber-net">
-      <HintPath>dll_win\jabber-net.dll</HintPath>
+    <Reference Include="jabber-net, Version=2.1.0.702, Culture=neutral, PublicKeyToken=924c5b18328d6f09, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>dll_win\jabber-net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -43,12 +42,5 @@
     <None Include="ConfBot.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="PlugIns" />
-    <ProjectReference Include="ConferenceBot.csproj">
-      <Project>{D8472D76-1BCE-42B1-BADE-F75619DCD631}</Project>
-      <Name>ConferenceBot</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>
