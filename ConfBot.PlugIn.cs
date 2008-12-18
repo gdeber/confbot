@@ -26,9 +26,16 @@ namespace ConfBot.PlugIns
 			this.confObj = confObj;
 		}
 		
-		public abstract bool msgCommand(ref Message msg, ref String newMsg, out bool command);
-		public abstract string Help();
+		public virtual bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
+			command = false;
+			return true;
+		}
 		
+		public virtual string Help() {
+			return "";
+		}
+		
+		#region ThreadSection
 		public virtual bool IsThread() {
 			return false;
 		}
@@ -40,6 +47,7 @@ namespace ConfBot.PlugIns
 		public virtual void StopThread() {
 			return;
 		}
+		#endregion
 	}
 	
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false, Inherited=true)]
