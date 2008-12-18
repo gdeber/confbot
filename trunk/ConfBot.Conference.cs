@@ -34,6 +34,7 @@ namespace ConfBot
 		//static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		static PlugIns.PlugInMgr plugMgr;
 
+		#region Constructor
 		public Conference(Configuration config)
 		{
 			confConf	= config;
@@ -103,7 +104,8 @@ namespace ConfBot
 			//Per non farsi rompere i maroni col certificato!!
 			j.OnInvalidCertificate += new System.Net.Security.RemoteCertificateValidationCallback(j_OnInvalidCertificate);
 		}
-
+		#endregion
+		
 		void j_OnMessage(object sender, jabber.protocol.client.Message msg)
 		{
 			if (msg.Type == jabber.protocol.client.MessageType.error || msg.Body == null)
@@ -111,8 +113,8 @@ namespace ConfBot
 				//per ora non faccio un tubo con gli errori
 			}
 
-			#region Admin command
-			else if (msg.Body.StartsWith("/quit"))
+			#region Admin commands
+			else if (msg.Body.ToLower().StartsWith("/quit"))
 			{
 				if (isAdmin(msg.From.Bare))
 				{
@@ -124,7 +126,7 @@ namespace ConfBot
 					j.Message(msg.From, NOADMINMSG);
 				}
 			}
-			else if (msg.Body.StartsWith("/name"))
+			else if (msg.Body.ToLower().StartsWith("/name"))
 			{
 				if (isAdmin(msg.From.Bare))
 				{
@@ -150,7 +152,7 @@ namespace ConfBot
 					j.Message(msg.From, NOADMINMSG);
 				}
 			}
-			else if (msg.Body.StartsWith("/status"))
+			else if (msg.Body.ToLower().StartsWith("/status"))
 			{
 				if (isAdmin(msg.From.Bare))
 				{
@@ -177,7 +179,7 @@ namespace ConfBot
 					j.Message(msg.From, NOADMINMSG);
 				}
 			}
-			else if (msg.Body.StartsWith("/msg"))
+			else if (msg.Body.ToLower().StartsWith("/msg"))
 			{
 				if (isAdmin(msg.From.Bare))
 				{
@@ -198,7 +200,8 @@ namespace ConfBot
 				}
 			}
 			#endregion
-			else if (msg.Body.StartsWith("/who"))
+			#region Other Commands
+			else if (msg.Body.ToLower().StartsWith("/who"))
 			{
 				String WhoMsg = "";
 				foreach (JID user in rm)
@@ -230,7 +233,7 @@ namespace ConfBot
 				j.Message(msg.From, WhoMsg);
 			}
 			
-			else if (msg.Body.StartsWith("/time"))
+			else if (msg.Body.ToLower().StartsWith("/time"))
 			{
 				DateTime Date = DateTime.Now;
 				String timeString = Date.ToString("HH:mm:ss");
@@ -240,7 +243,7 @@ namespace ConfBot
 				}
 			}
 
-			else if (msg.Body.StartsWith("/help"))
+			else if (msg.Body.ToLower().StartsWith("/help"))
 			{
 				String helpString = "*/help*: aiuto\n";
 				helpString += "*/time*: ti dice l'ora\n";
@@ -254,6 +257,7 @@ namespace ConfBot
 				}
 				j.Message(msg.From, helpString);
 			}
+			#endregion
 			else
 			{
 				string msgBody	= msg.Body;
@@ -296,6 +300,7 @@ namespace ConfBot
 			return false;
 		}
 
+		#region Jabber events
 		bool j_OnInvalidCertificate(object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate, System.Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
 		{
 			//Sono malato , ho il certificato!
@@ -333,7 +338,8 @@ namespace ConfBot
 			// Shut down.
 			done.Set();
 		}
-
+		#endregion
+		
 		public void LogMessageToFile(string msg)
 		{
 			System.IO.StreamWriter sw = System.IO.File.AppendText(logFile);
@@ -349,6 +355,7 @@ namespace ConfBot
 			}
 		}
 		
+		#region Thread Method
 		public void Run() {
 			
 			LogMessageToFile("******* CONNECT *******");
@@ -366,5 +373,6 @@ namespace ConfBot
 
 			LogMessageToFile("******* QUIT *******");
 		}
+		#endregion
 	}
 }
