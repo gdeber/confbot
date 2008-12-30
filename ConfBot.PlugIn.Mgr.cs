@@ -38,6 +38,7 @@ namespace ConfBot.PlugIns
 			{
 				if (((PlugIn) pluginList[Ndx]).IsThread()) {
 					Thread thr = new Thread(((PlugIn) pluginList[Ndx]).StartThread);
+					thr.Priority = ThreadPriority.BelowNormal;
 					thr.Start();
 				}
 			}
@@ -81,6 +82,15 @@ namespace ConfBot.PlugIns
 				confObj.LogMessageToFile(ex.Message);
 			}
 			return false;
+		}
+		
+		public void Stop() {
+			for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
+			{
+				if (((PlugIn) pluginList[Ndx]).IsThread()) {
+					((PlugIn) pluginList[Ndx]).StopThread();
+				}
+			}
 		}
 		
 		public string Help() {
