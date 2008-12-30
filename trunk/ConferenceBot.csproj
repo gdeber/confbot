@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.Conference.cs" />
+    <Compile Include="ConfBot.Lib.TextLib.cs" />
     <Compile Include="ConfBot.PlugIn.cs" />
     <Compile Include="ConfBot.PlugIn.Mgr.cs" />
   </ItemGroup>
