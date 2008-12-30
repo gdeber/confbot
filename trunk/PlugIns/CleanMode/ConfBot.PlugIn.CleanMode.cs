@@ -40,6 +40,8 @@ namespace ConfBot.PlugIns
 			charAlphaDict.AddRange(charAlpha);
 			//clean Mode
 			cleanMode	= (this.confObj.confConf.AppSettings.Settings["CleanMode"].Value == "on");
+			//autoinsult Mode
+			autoInsultMode	= (this.confObj.confConf.AppSettings.Settings["AutoInsultMode"].Value == "on");
 			//bad Dictionary
 			badDict		= this.confObj.confConf.AppSettings.Settings["BadDictionary"].Value.Split(',');
 			for (int ndx = 0; ndx < badDict.Length; ndx++) {
@@ -224,10 +226,6 @@ namespace ConfBot.PlugIns
 			return helpString;
 		}
 	
-		public override bool IsThread() {
-			return true;
-		}
-		
 		private void SendAutoInsult(object stateInfo) {
 			int newTime = (new Random(unchecked((int)DateTime.Now.Ticks))).Next(300 * 1000, 3600 * 1000);
 			autoInsult.Change(newTime, newTime);
@@ -246,10 +244,17 @@ namespace ConfBot.PlugIns
 			}
 		}
 		
+		public override bool IsThread() {
+			return true;
+		}
+		
 		public override void StartThread() {
 			autoInsult =  new Timer(this.SendAutoInsult, null, 60000, 60000);
-			while (true) {
-			}
 		}		
+
+		public override void StopThread() {
+			autoInsult.Dispose();
+		}		
+
 	}
 }
