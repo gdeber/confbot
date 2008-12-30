@@ -21,7 +21,7 @@ namespace ConfBot
 	public sealed class Conference
 	{
 		// we will wait on this event until we're done sending
-		public ManualResetEvent done = new ManualResetEvent(false);
+		//public ManualResetEvent done = new ManualResetEvent(false);
 		public JabberClient j = new JabberClient();
 		public RosterManager rm= new RosterManager();
 		public PresenceManager pm = new PresenceManager();
@@ -34,6 +34,8 @@ namespace ConfBot
 		//static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		static PlugIns.PlugInMgr plugMgr;
 
+		private bool terminate = false;
+		
 		#region Constructor
 		public Conference(Configuration config)
 		{
@@ -119,7 +121,8 @@ namespace ConfBot
 				if (isAdmin(msg.From.Bare))
 				{
 					//è la fine
-					done.Set();
+					//done.Set();
+					terminate	= true;
 				}
 				else
 				{
@@ -336,7 +339,8 @@ namespace ConfBot
 			LogMessageToFile("Error: " + ex.ToString());
 
 			// Shut down.
-			done.Set();
+			//done.Set();
+			terminate	= true;
 		}
 		#endregion
 		
@@ -363,8 +367,13 @@ namespace ConfBot
 			j.Connect();
 
 			// wait until sending a message is complete
-			done.WaitOne();
+			//done.WaitOne();
+			while(!terminate) {
+				Thread.Sleep(250);
+			}
 
+			plugMgr.Stop();
+			
 			// logout cleanly
 			j.Close();
 			

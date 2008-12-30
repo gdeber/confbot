@@ -32,7 +32,8 @@ namespace ConfBot
 			Thread confThread = new Thread(conf.Run);
 			confThread.Start();
 			
-			while (confThread.IsAlive);
+			while (!confThread.IsAlive);
+			confThread.Join();
 		}
 
 	}
