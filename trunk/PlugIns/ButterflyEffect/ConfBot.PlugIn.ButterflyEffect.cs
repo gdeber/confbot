@@ -55,9 +55,8 @@ namespace ConfBot.PlugIns
 												confObj.j.Message(msg.From, "*Butterfly DeActivated*");
 												break;
 									
-									case "help":String helpString = "*butterfly* riscrive il tuo messaggio in alfabeto farfallino";
+									case "help":String helpString = "*butterfly* riscrive il tuo messaggio in alfabeto farfallino\n";
 												helpString += "*/Butterfly help*: aiuto\n";
-												helpString += "*/cleanmode [on|off]*: attiva/disattiva il cleanmode\n";
 												confObj.j.Message(msg.From, helpString);
 												break;
 									
