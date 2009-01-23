@@ -15,9 +15,18 @@ using System.Configuration;
 
 namespace ConfBot
 {
+	public enum UserStatus {
+		Unknown = 0,
+		NotAvaiable = 1,
+		Away = 2,
+		DoNotDisturb = 3,
+		OnLine = 4		
+	}
+	
 	/// <summary>
-	/// Description of ConfBot_Conference.
+	/// Description of Conference.
 	/// </summary>
+	/// 
 	public sealed class Conference
 	{
 		// we will wait on this event until we're done sending
@@ -236,8 +245,7 @@ namespace ConfBot
 				}
 				j.Message(msg.From, WhoMsg);
 			}
-			
-			else if (msg.Body.ToLower().StartsWith("/time"))
+			else if (msg.Body.ToLower().Trim() == "/time")
 			{
 				DateTime Date = DateTime.Now;
 				String timeString = Date.ToString("HH:mm:ss");
@@ -246,16 +254,19 @@ namespace ConfBot
 					j.Message(user, "*ConfBot:* qui a _" + botName + "_ sono le " + timeString);
 				}
 			}
-
-			else if (msg.Body.ToLower().StartsWith("/help"))
+			else if (msg.Body.ToLower().Trim() == "/ver")
 			{
-				String helpString = botName + " - " + BotVer + "\n";
-				helpString += "*/help*: aiuto\n";
+				j.Message(msg.From, "*ConfBot:* ver. *" + BotVer + "*");
+			}
+			else if (msg.Body.ToLower().Trim() == "/help")
+			{
+				String helpString = "*/help*: aiuto\n";
 				helpString += "*/time*: ti dice l'ora\n";
 				helpString += "*/who*: ti dice chi e' online\n";
 				helpString += "*/quit*: spegne il bot\n";
 				helpString += "*/status*: cambia il messaggio di stato\n";
-				helpString += "*/msg*: annuncia al popolo";
+				helpString += "*/msg*: annuncia al popolo\n";
+				helpString += "*/ver*: versione del bot";
 				string helpPlugIns = plugMgr.Help();
 				if (helpPlugIns.Trim() != "") {
 					helpString += ('\n' + helpPlugIns);
@@ -268,25 +279,28 @@ namespace ConfBot
 				string msgBody	= msg.Body;
 				if (!plugMgr.msgCommand(ref msg, out msgBody))
 				{
-					
-					foreach (JID user in rm)
-					{
-						//se non sono quello che l'ha mandato
-						if (user.ToString() != msg.From.Bare)
+					if (msg.Body.ToLower().StartsWith("/")) {
+						j.Message(msg.From, "unknown command");
+					} else {
+						foreach (JID user in rm)
 						{
-							//ottengo il roster item che è più informativo
-							//jabber.protocol.iq.Item rosterItem = rm[user];
-							//tipo il nickname
-							String FromUserName = rm[msg.From.Bare].Nickname;
-							if (FromUserName == null)
+							//se non sono quello che l'ha mandato
+							if (user.ToString() != msg.From.Bare)
 							{
-								//se non c'è il nickname uso il nome utente
-								FromUserName = msg.From.User;
+								//ottengo il roster item che è più informativo
+								//jabber.protocol.iq.Item rosterItem = rm[user];
+								//tipo il nickname
+								String FromUserName = rm[msg.From.Bare].Nickname;
+								if (FromUserName == null)
+								{
+									//se non c'è il nickname uso il nome utente
+									FromUserName = msg.From.User;
+								}
+		
+								//Andrew dice di mandare lo stesso...
+								j.Message(user, "*" + FromUserName + ":* " + msgBody);
+		
 							}
-	
-							//Andrew dice di mandare lo stesso...
-							j.Message(user, "*" + FromUserName + ":* " + msgBody);
-	
 						}
 					}
 				}			
@@ -305,6 +319,37 @@ namespace ConfBot
 			return false;
 		}
 
+		public UserStatus GetUser(string username, out JID userObj) {
+			try {
+				foreach (JID user in rm) {
+					String Nick = rm[user.Bare].Nickname;
+					if (Nick == null) {
+						Nick = "";
+					}
+					if ((username.ToLower() == Nick.ToLower()) || (username.ToLower() == user.User.ToLower()) || (username.ToLower() == user.Bare)) {
+						userObj = user;
+						if (!pm.IsAvailable(user)) {
+							return UserStatus.NotAvaiable;
+						} else {
+							switch (pm[user].Show) {
+								case "dnd":
+									return UserStatus.DoNotDisturb;
+								case "away":
+									return UserStatus.Away;
+								default:
+									return UserStatus.OnLine;
+							}
+						}
+					}
+				}
+			}
+			catch(Exception E) {
+				LogMessageToFile(E.Message);
+			}
+			userObj = null;
+			return UserStatus.Unknown;
+		}
+		
 		#region Jabber events
 		bool j_OnInvalidCertificate(object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate, System.Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
 		{
@@ -348,16 +393,16 @@ namespace ConfBot
 		
 		public void LogMessageToFile(string msg)
 		{
-			System.IO.StreamWriter sw = System.IO.File.AppendText(logFile);
-			String header = "[" + DateTime.Now.ToString() + "] ";
-
 			try
 			{
+				System.IO.StreamWriter sw = System.IO.File.AppendText(logFile);
+				String header = "[" + DateTime.Now.ToString() + "] ";
 				sw.WriteLine(header + msg);
+				sw.Close();
 			}
 			finally
 			{
-				sw.Close();
+				
 			}
 		}
 		

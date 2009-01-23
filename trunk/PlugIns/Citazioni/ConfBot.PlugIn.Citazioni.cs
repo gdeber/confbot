@@ -38,7 +38,7 @@ namespace ConfBot.PlugIns
 
 		public Citazioni(Conference confObj) : base(confObj) {
 			//autoQuuote Mode
-			autoQuoteMode	= (this.confObj.confConf.AppSettings.Settings["AutoQuoteMode"].Value == "on");
+			//autoQuoteMode	= (this.confObj.confConf.AppSettings.Settings["AutoQuoteMode"].Value == "on");
 		}
 		
 		public override bool msgCommand(ref Message msg, ref String newMsg, out bool command) {

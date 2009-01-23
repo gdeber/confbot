@@ -78,6 +78,11 @@ namespace ConfBot.PlugIns
 						return true;
 					}
 				}
+				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
+				{
+					((PlugIn) pluginList[Ndx]).msgCommand(ref msg, ref newMsg, out command);
+					msg.Body =  newMsg;
+				}
 			} catch(Exception ex) {
 				confObj.LogMessageToFile(ex.Message);
 			}
