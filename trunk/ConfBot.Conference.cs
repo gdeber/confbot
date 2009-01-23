@@ -31,7 +31,7 @@ namespace ConfBot
 		string[] admins;
 		public const string NOADMINMSG = "Non sei admin...niente da fare!";
 		public const string PLUGINDIR = ".\\PlugIns";
-		//static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+		static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		static PlugIns.PlugInMgr plugMgr;
 
 		private bool terminate = false;
@@ -144,6 +144,7 @@ namespace ConfBot
 						//ora lo salvo
 						confConf.AppSettings.Settings["BotName"].Value = j.JID.User;
 						confConf.Save();
+						botName = nameMsg;
 					}
 					else
 					{
@@ -248,7 +249,8 @@ namespace ConfBot
 
 			else if (msg.Body.ToLower().StartsWith("/help"))
 			{
-				String helpString = "*/help*: aiuto\n";
+				String helpString = botName + " - " + BotVer + "\n";
+				helpString += "*/help*: aiuto\n";
 				helpString += "*/time*: ti dice l'ora\n";
 				helpString += "*/who*: ti dice chi e' online\n";
 				helpString += "*/quit*: spegne il bot\n";
