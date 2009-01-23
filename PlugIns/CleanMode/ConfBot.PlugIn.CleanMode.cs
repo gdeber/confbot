@@ -32,6 +32,7 @@ namespace ConfBot.PlugIns
 		
 		List<char> charAlphaDict = new List<char>();
 		List<string> badWordDict = new List<string>();
+		List<string> insultDict = new List<string>();
 
 		Timer autoInsult;
 			
@@ -51,6 +52,11 @@ namespace ConfBot.PlugIns
 			}
 			//good Dictionary
 			goodDict	= this.confObj.confConf.AppSettings.Settings["GoodDictionary"].Value.Split(',');
+			//insult Dictionary
+			string[] insultList	= this.confObj.confConf.AppSettings.Settings["InsultDictionary"].Value.Split(',');
+			for (int ndx = 0; ndx < insultList.Length; ndx++) {
+				insultDict.Add(insultList[ndx]);
+			}
 		}
 
 		public bool CleanText(ref string messageText) {
@@ -140,8 +146,7 @@ namespace ConfBot.PlugIns
 											break;
 						}
 					}
-				}
-				else {
+				} else {
 					confObj.j.Message(msg.From, Conference.NOADMINMSG );
 				}
 				return true;
@@ -177,6 +182,26 @@ namespace ConfBot.PlugIns
 					confObj.j.Message(msg.From, Conference.NOADMINMSG );
 				}
 				return true;
+			} else if (msg.Body.ToLower().StartsWith("/addinsult")) {
+				if (confObj.isAdmin(msg.From.Bare)) {
+					command = true;
+					//10 char + 1 space
+					if (msg.Body.Length > 11) {
+						string newInsult = msg.Body.Remove(0, 11).Trim();
+						string newDict = "";
+						insultDict.Add(newInsult);
+						for(int iNdx = 0; iNdx < insultDict.Count; iNdx++) {
+							newDict += insultDict[iNdx] + ',';
+						}							
+						newDict.Remove(insultDict.Count - 1);
+						confObj.confConf.AppSettings.Settings["InsultDictionary"].Value = newDict;
+						confObj.confConf.Save();
+						confObj.j.Message(msg.From, "insult _" + newInsult + "_ addedd");
+					}
+					return true;
+				} else {
+					confObj.j.Message(msg.From, Conference.NOADMINMSG );
+				}
 			} else if (msg.Body.ToLower().StartsWith("/insult")) {
 				command = true;
 				string destName = "";
@@ -185,14 +210,19 @@ namespace ConfBot.PlugIns
 				if (msg.Body.Length > 8) {
 					destName = msg.Body.Remove(0, 8).Trim();
 					destMsg	= destName.ToUpper();
-					foreach (JID user in confObj.rm) {
-						if (confObj.rm[user.Bare].Nickname.ToUpper() == destMsg) {
-							Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
-							String insult	= badDict[rnd.Next(badDict.Length)];
-							confObj.j.Message(user, "_" + insult + "_");
-							confObj.j.Message(msg.From, Conference.botName + " send _" + insult + "_ to _" + destName + "_");
-							break;
-						}
+					JID user;
+					switch (confObj.GetUser(destMsg, out user)) {
+							case UserStatus.Unknown		:	confObj.j.Message(msg.From, "User _" + destMsg + "_ not exist.");
+															break;
+							case UserStatus.Away		:	confObj.j.Message(msg.From, "User _" + destMsg + "_ is away.");
+															break;
+							case UserStatus.NotAvaiable	:	confObj.j.Message(msg.From, "User _" + destMsg + "_ is offline.");
+															break;
+							default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
+															String insult	= insultDict[rnd.Next(insultDict.Count)];
+															confObj.j.Message(user, "_" + insult + "_");
+															confObj.j.Message(msg.From, Conference.botName + " send _" + insult + "_ to _" + destName + "_");
+															break;
 					}
 				}
 				return true;
@@ -202,11 +232,6 @@ namespace ConfBot.PlugIns
 				try {
 					string msgBody	= newMsg;
 					CleanText(ref msgBody);
-					/*for (int ndx = 0; ndx < badDict.Length; ndx++) {
-						while (msgBody.Contains(badDict[ndx])) {
-							msgBody = msgBody.Replace(badDict[ndx], "_" + goodDict[rnd.Next(goodDict.Length)] + "_");
-						}
-					}*/
 					if (msgBody.Trim() != "") {
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
@@ -239,7 +264,7 @@ namespace ConfBot.PlugIns
 					}
 				}
 				if (lstUsers.Count > 0) {
-					confObj.j.Message(lstUsers[rndUser.Next(lstUsers.Count)], Conference.botName + " ti manda un insulto gratuito: _" + badDict[rndMsg.Next(badDict.Length)] + "_");
+					confObj.j.Message(lstUsers[rndUser.Next(lstUsers.Count)], Conference.botName + " ti manda un insulto gratuito: _" + insultDict[rndMsg.Next(insultDict.Count)] + "_");
 				}
 			}
 		}
