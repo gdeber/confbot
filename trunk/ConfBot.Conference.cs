@@ -154,6 +154,7 @@ namespace ConfBot
 						confConf.AppSettings.Settings["BotName"].Value = j.JID.User;
 						confConf.Save();
 						botName = nameMsg;
+						j.Message(msg.From, "BotName changed to : " + botName);
 					}
 					else
 					{
@@ -251,7 +252,7 @@ namespace ConfBot
 				String timeString = Date.ToString("HH:mm:ss");
 				foreach (JID user in rm)
 				{
-					j.Message(user, "*ConfBot:* qui a _" + botName + "_ sono le " + timeString);
+					j.Message(user, "Qui da _" + botName + "_ sono le " + timeString);
 				}
 			}
 			else if (msg.Body.ToLower().Trim() == "/ver")
@@ -263,10 +264,15 @@ namespace ConfBot
 				String helpString = "*/help*: aiuto\n";
 				helpString += "*/time*: ti dice l'ora\n";
 				helpString += "*/who*: ti dice chi e' online\n";
-				helpString += "*/quit*: spegne il bot\n";
-				helpString += "*/status*: cambia il messaggio di stato\n";
-				helpString += "*/msg*: annuncia al popolo\n";
 				helpString += "*/ver*: versione del bot";
+				if (isAdmin(msg.From.Bare))
+				{
+					helpString += "\n";
+					helpString += "*/quit*: spegne il bot\n";
+					helpString += "*/status*: cambia il messaggio di stato\n";
+					helpString += "*/msg*: annuncia al popolo\n";
+					helpString += "*/name*: cambia il nome al bot";
+				}
 				string helpPlugIns = plugMgr.Help();
 				if (helpPlugIns.Trim() != "") {
 					helpString += ('\n' + helpPlugIns);
