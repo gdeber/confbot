@@ -27,7 +27,7 @@ namespace ConfBot
 		static void Main(string[] args)
 		{
 			ExeConfigurationFileMap configFile = new ExeConfigurationFileMap();
-			configFile.ExeConfigFilename = args.Length > 0 ? args[0]: (".\\" + CONFIGFILE) ;
+			configFile.ExeConfigFilename = args.Length > 0 ? args[0]: (CONFIGFILE) ;
 			conf = new Conference(ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None));
 			Thread confThread = new Thread(conf.Run);
 			confThread.Start();
