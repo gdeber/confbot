@@ -39,7 +39,9 @@ namespace ConfBot
 		string logFile;
 		string[] admins;
 		public const string NOADMINMSG = "Non sei admin...niente da fare!";
-		public const string PLUGINDIR = ".\\PlugIns";
+		public const string PLUGINDIR = "PlugIns";
+		public string PluginDir;
+		
 		static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		static PlugIns.PlugInMgr plugMgr;
 
@@ -67,10 +69,17 @@ namespace ConfBot
 			j.Password = confConf.AppSettings.Settings["Password"].Value;
 			j.NetworkHost = confConf.AppSettings.Settings["NetworkHost"].Value;
 			j.Port = Int32.Parse(confConf.AppSettings.Settings["Port"].Value);
+			
+			//pluginDir
+			PluginDir = confConf.AppSettings.Settings["PluginDir"].Value;
+			if (PluginDir.Length.Equals(0))
+			{
+				PluginDir = PLUGINDIR;
+			}
 
 			//plugin manager
 			
-			plugMgr = new PlugIns.PlugInMgr(this, PLUGINDIR);
+			plugMgr = new PlugIns.PlugInMgr(this, PluginDir);
 			
 			//auth settings
 			

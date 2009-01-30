@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-# SharpDevelop 3.0.0.3437
+# SharpDevelop 3.0.0.3775
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConferenceBot", "ConferenceBot.csproj", "{D8472D76-1BCE-42B1-BADE-F75619DCD631}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleanmode", "PlugIns\CleanMode\Cleanmode.csproj", "{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}"

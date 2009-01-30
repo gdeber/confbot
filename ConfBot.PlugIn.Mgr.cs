@@ -30,17 +30,24 @@ namespace ConfBot.PlugIns
 		public PlugInMgr(Conference confObj, string dirPlugIns)
 		{
 			this.confObj = confObj;
-			foreach (String fileName in System.IO.Directory.GetFiles(dirPlugIns, "*.dll")) {
-				AnalyzeAssemblyFile(fileName);
-			}
-			
-			for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
+			if (System.IO.Directory.Exists(dirPlugIns))
 			{
-				if (((PlugIn) pluginList[Ndx]).IsThread()) {
-					Thread thr = new Thread(((PlugIn) pluginList[Ndx]).StartThread);
-					thr.Priority = ThreadPriority.BelowNormal;
-					thr.Start();
+				foreach (String fileName in System.IO.Directory.GetFiles(dirPlugIns, "*.dll")) {
+					AnalyzeAssemblyFile(fileName);
 				}
+				
+				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
+				{
+					if (((PlugIn) pluginList[Ndx]).IsThread()) {
+						Thread thr = new Thread(((PlugIn) pluginList[Ndx]).StartThread);
+						thr.Priority = ThreadPriority.BelowNormal;
+						thr.Start();
+					}
+				}
+			}
+			else 
+			{
+				confObj.LogMessageToFile("No plugin directory");
 			}
 		}
 		

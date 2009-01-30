@@ -7,6 +7,7 @@
     <RootNamespace>ConfBot</RootNamespace>
     <AssemblyName>ConferenceBot</AssemblyName>
     <StartArguments>AutmConference.config</StartArguments>
+    <SourceAnalysisOverrideSettingsFile>C:\Program Files\SharpDevelop\3.0\bin\..\Settings\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
