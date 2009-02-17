@@ -1,4 +1,4 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectGuid>{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -6,6 +6,8 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ButterflyEffect</RootNamespace>
     <AssemblyName>ButterflyEffect</AssemblyName>
+    <SourceAnalysisOverrideSettingsFile>Q:\Software\SharpDevelop\3.0\bin\..\Settings\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
