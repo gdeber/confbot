@@ -12,6 +12,7 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using jabber;
+using jabber.connection;
 using jabber.protocol.client;
 using ConfBot.PlugIns;
 using ConfBot.Lib;
@@ -62,7 +63,7 @@ namespace ConfBot.PlugIns
 			return helpString;
 		}
 		
-		public static string getCitazione(ref string Author) {
+		public string getCitazione(ref string Author) {
 			string	lsText = "";
 			Author = "";
 			try {
@@ -70,6 +71,15 @@ namespace ConfBot.PlugIns
 				HttpWebResponse	loResponse;
 				Stream			loStream;
 				loRequest.Method = "GET";
+				
+				switch (confObj.j.Proxy) {
+					case ProxyType.None		:	break;
+					case ProxyType.HTTP		:	loRequest.Proxy = new WebProxy(confObj.j.ProxyHost, confObj.j.ProxyPort);
+												break;
+					case ProxyType.Socks5	:	loRequest.Proxy = new WebProxy(confObj.j.ProxyHost.ToString() + ':' + confObj.j.ProxyPort.ToString(), false, null, new System.Net.NetworkCredential(confObj.j.ProxyUsername, confObj.j.ProxyPassword));
+												break;
+					default					:	break;
+				}
 				loResponse	= (HttpWebResponse) loRequest.GetResponse();
 				loStream	= loResponse.GetResponseStream();
 				StreamReader loRead = new StreamReader(loStream);
