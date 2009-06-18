@@ -49,7 +49,7 @@ namespace ConfBot.PlugIns
 			tempCmd.Command	= "autoinsult";
 			tempCmd.Code	= Convert.ToInt32(Commands.AutoInsult);
 			tempCmd.Admin	= true;
-			tempCmd.Help	= "[on|offf] attiva/disattiva l'insulto automatico";
+			tempCmd.Help	= "[on|off] attiva/disattiva l'insulto automatico";
 			listCmd.Add(tempCmd);
 			// AddInsult Command
 			tempCmd.Command	= "addinsult";

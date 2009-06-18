@@ -63,6 +63,7 @@
       <Link>PlugIns\Cleanmode.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Content Include="ConfBot.cd" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ConfBot.config">
