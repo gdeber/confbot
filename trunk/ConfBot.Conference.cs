@@ -104,6 +104,12 @@ namespace ConfBot
 			tempCmd.Admin	= true;
 			tempCmd.Help	= "aiuto";
 			listCmd.Add(tempCmd);
+			// Help Command
+			tempCmd.Command	= "nick";
+			tempCmd.Code	= Convert.ToInt32(Commands.Nick);
+			tempCmd.Admin	= true;
+			tempCmd.Help	= "cambia il nickname di un utente";
+			listCmd.Add(tempCmd);
 			#endregion
 			
 			confConf	= config;
@@ -197,7 +203,8 @@ namespace ConfBot
 			Who		= 5,
 			Time	= 6,
 			Ver		= 7,
-			Help	= 8,			
+			Help	= 8,
+			Nick	= 9
 		}
 		
 		public override bool ExecCommand(JID user, int CodeCmd, string Param) {
@@ -273,6 +280,21 @@ namespace ConfBot
 											string helpMsg = Help(isAdm);
 											helpMsg	+= plugMgr.Help(isAdm);											
 											SendMessage(user, helpMsg);
+											break;
+				case Commands.Nick		:	
+											if (Param != "") {
+												string[] nick	= Param.Split(' ');
+												if (nick.Length != 2) {
+													JID userObj;
+													GetUser(nick[0], out userObj);
+													if (userObj == null) {
+														SendMessage(user, "L'utente *" + nick[0] + "* non esiste");
+													} else {
+														userObj.User = nick[1];
+														SendMessage(user, "Nickname cambiato con successo");
+													}
+												}
+											}
 											break;
 			}
 			return true;
