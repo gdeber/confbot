@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.PlugIn.Citazioni.cs" />
+    <Content Include="Citazioni.cd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ConferenceBot.csproj">

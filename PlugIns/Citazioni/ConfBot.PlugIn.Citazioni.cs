@@ -14,6 +14,7 @@ using System.Threading;
 using jabber;
 using jabber.connection;
 using jabber.protocol.client;
+using ConfBot;
 using ConfBot.PlugIns;
 using ConfBot.Lib;
 
@@ -37,31 +38,90 @@ namespace ConfBot.PlugIns
 		bool autoQuoteMode = true;
 		Timer autoQuote;
 
-		public Citazioni(Conference confObj) : base(confObj) {
+		public Citazioni(Conference confObject) : base(confObject) {
+			#region Command Initialization
+			BotCmd tempCmd;
+			// Cleanmode Command
+			tempCmd.Command	= "citazione";
+			tempCmd.Code	= Convert.ToInt32(Commands.Citazione);
+			tempCmd.Admin	= false;
+			tempCmd.Help	= "propone una citazione";
+			listCmd.Add(tempCmd);
+			// AutoInsult Command
+			tempCmd.Command	= "autoquote";
+			tempCmd.Code	= Convert.ToInt32(Commands.AutoQuote);
+			tempCmd.Admin	= false;
+			tempCmd.Help	= "[on|off] attiva/disattiva la citazione automatica";
+			listCmd.Add(tempCmd);
+			#endregion
+
 			//autoQuuote Mode
-			//autoQuoteMode	= (this.confObj.confConf.AppSettings.Settings["AutoQuoteMode"].Value == "on");
+			autoQuoteMode	= (this.confObj.GetSetting("AutoQuoteMode") == "on");
+		}
+
+		#region Command Class override
+		private enum Commands {
+			Citazione	= 1,
+			AutoQuote	= 2	
 		}
 		
-		public override bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
-			command	= false;
-			newMsg = msg.Body;
-			if (msg.Body.ToLower().StartsWith("/citazione")) {
-				string author = "";
-				string citazione = '\n' + "_" + getCitazione(ref author) + "_";
-				if (author.Trim() == "")
-					confObj.j.Message(msg.From, citazione);
-				else {
-					confObj.j.Message(msg.From, citazione + '\n' + "*_" + author + "_*");
-				}
-				command = true;
+		public override bool ExecCommand(JID user, int CodeCmd, string Param) {
+			switch((Commands)CodeCmd) {
+				case Commands.Citazione		: 
+												string author = "";
+												string citazione = '\n' + "_" + getCitazione(ref author) + "_";
+												if (author.Trim() == "")
+													confObj.SendMessage(user, citazione);
+												else {
+													confObj.SendMessage(user, citazione + '\n' + "*_" + author + "_*");
+												}
+												break;
+				case Commands.AutoQuote	:	
+												switch (Param) {
+													case "on" 	:	autoQuoteMode	= true;
+																	confObj.SendMessage(user, "*AutoQuote Activated*");
+																	//ora lo salvo
+																	confObj.SetSetting("AutoQuoteMode", "on");
+																	break;
+													case "off"	:	autoQuoteMode	= false;
+																	confObj.SendMessage(user, "*AutoQuote Deactivated*");
+																	//ora lo salvo
+																	confObj.SetSetting("AutoQuoteMode", "off");
+																	break;
+													default		:	if (autoQuoteMode) {
+																		confObj.SendMessage(user, "_AutoQuote is active_");
+																	} else {
+																		confObj.SendMessage(user, "_AutoQuote is not active_");
+																	}
+																	break;
+												}
+												break;
 			}
 			return true;
 		}
+		#endregion
+	
 		
-		public override string Help() {
-			string helpString = "*/citazione help*: aiuto su citazioni";
-			return helpString;
+		public override bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
+			command	= false;
+//			newMsg = msg.Body;
+//			if (msg.Body.ToLower().StartsWith("/citazione")) {
+//				string author = "";
+//				string citazione = '\n' + "_" + getCitazione(ref author) + "_";
+//				if (author.Trim() == "")
+//					this.confObj.SendMessage(msg.From, citazione);
+//				else {
+//					this.confObj.SendMessage(msg.From, citazione + '\n' + "*_" + author + "_*");
+//				}
+//				command = true;
+//			}
+			return true;
 		}
+		
+//		public override string Help() {
+//			string helpString = "*/citazione help*: aiuto su citazioni";
+//			return helpString;
+//		}
 		
 		public string getCitazione(ref string Author) {
 			string	lsText = "";
@@ -71,15 +131,7 @@ namespace ConfBot.PlugIns
 				HttpWebResponse	loResponse;
 				Stream			loStream;
 				loRequest.Method = "GET";
-				
-				switch (confObj.j.Proxy) {
-					case ProxyType.None		:	break;
-					case ProxyType.HTTP		:	loRequest.Proxy = new WebProxy(confObj.j.ProxyHost, confObj.j.ProxyPort);
-												break;
-					case ProxyType.Socks5	:	loRequest.Proxy = new WebProxy(confObj.j.ProxyHost.ToString() + ':' + confObj.j.ProxyPort.ToString(), false, null, new System.Net.NetworkCredential(confObj.j.ProxyUsername, confObj.j.ProxyPassword));
-												break;
-					default					:	break;
-				}
+				loRequest.Proxy = confObj.GetProxy();
 				loResponse	= (HttpWebResponse) loRequest.GetResponse();
 				loStream	= loResponse.GetResponseStream();
 				StreamReader loRead = new StreamReader(loStream);
@@ -122,7 +174,7 @@ namespace ConfBot.PlugIns
 
 				foreach(JID user in confObj.rm) {
 					if (confObj.pm.IsAvailable(user)) {
-						confObj.j.Message(user, Conference.botName + " propone una perla: " + citazione);
+						confObj.SendMessage(user, Conference.botName + " propone una perla: " + citazione);
 					}
 				}
 			}

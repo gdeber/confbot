@@ -10,6 +10,7 @@
 using System;
 using System.Reflection;
 using System.Threading;
+using System.Collections.Generic;
 using jabber;
 using jabber.protocol.client;
 using ConfBot.PlugIns;
@@ -24,8 +25,8 @@ namespace ConfBot.PlugIns
 	/// </summary>
 	public class PlugInMgr
 	{
-		Conference	confObj;
-		static System.Collections.Generic.List<PlugIn>	pluginList = new  System.Collections.Generic.List<PlugIn>();
+		private Conference	confObj;
+		private List<PlugIn>	pluginList = new List<PlugIn>();
 		
 		public PlugInMgr(Conference confObj, string dirPlugIns)
 		{
@@ -105,12 +106,12 @@ namespace ConfBot.PlugIns
 			}
 		}
 		
-		public string Help() {
+		public string Help(bool isAdmin) {
 			string tmp = "";
 			try {
 				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
 				{
-					string help = ((PlugIn) pluginList[Ndx]).Help();
+					string help = ((PlugIn) pluginList[Ndx]).Help(isAdmin);
 					if (help.Trim() != "")
 					{
 						tmp += help + '\n';
@@ -120,6 +121,12 @@ namespace ConfBot.PlugIns
 				confObj.LogMessageToFile(ex.Message);
 			}
 			return tmp;
+		}
+		
+		public List<PlugIn> PlugInsList {
+			get {
+				return pluginList;
+			}
 		}
 	}
 }

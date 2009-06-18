@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.PlugIn.CleanMode.cs" />
+    <Content Include="Cleanmode.cd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ConferenceBot.csproj">
