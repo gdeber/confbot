@@ -96,10 +96,10 @@ namespace ConfBot
 				string lsCommand = "";
 				string lsParam	= "";
 				if (liPos == -1) {
-					lsCommand = lsTemp.Substring(1);
+					lsCommand = Message.Substring(1);
 				} else {
-					lsCommand = lsTemp.Substring(1, liPos - 1);
-					lsParam	= lsTemp.Substring(liPos + 1, lsTemp.Length - liPos - 1);
+					lsCommand = Message.Substring(1, liPos - 1);
+					lsParam	= Message.Substring(liPos + 1, lsTemp.Length - liPos - 1);
 				}
 				botCommand cmd;
 				if (cmdDict.TryGetValue(lsCommand, out cmd)) {
