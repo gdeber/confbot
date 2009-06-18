@@ -284,13 +284,13 @@ namespace ConfBot
 				case Commands.Nick		:	
 											if (Param != "") {
 												string[] nick	= Param.Split(' ');
-												if (nick.Length != 2) {
+												if (nick.Length == 2) {
 													JID userObj;
 													GetUser(nick[0], out userObj);
 													if (userObj == null) {
 														SendMessage(user, "L'utente *" + nick[0] + "* non esiste");
 													} else {
-														userObj.User = nick[1];
+														rm[userObj.Bare].Nickname	= nick[1];
 														SendMessage(user, "Nickname cambiato con successo");
 													}
 												}

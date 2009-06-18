@@ -114,7 +114,7 @@ namespace ConfBot.PlugIns
 					string help = ((PlugIn) pluginList[Ndx]).Help(isAdmin);
 					if (help.Trim() != "")
 					{
-						tmp += help + '\n';
+						tmp += help; // + '\n';
 					}
 				}
 			} catch(Exception ex) {
