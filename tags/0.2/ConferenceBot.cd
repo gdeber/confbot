@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<ClassDiagram Zoom="1" MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Enum Name="ConfBot.UserStatus" Collapsed="False">
+    <Position X="0.5" Y="11" Width="2.019235" />
+    <Compartments />
+  </Enum>
+  <Struct Name="ConfBot.BotCmd" Collapsed="False">
+    <Position X="0.5" Y="12.9" Width="1.378537" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="False" />
+    </Compartments>
+  </Struct>
+  <Class Name="ConfBot.Lib.TextLib" Collapsed="False">
+    <Position X="0.5" Y="14.7" Width="1.851515" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="False" />
+    </Compartments>
+  </Class>
+  <Class Name="ConfBot.PlugIns.PlugInAttribute" Collapsed="False">
+    <Position X="0.5" Y="16.4" Width="1.375597" />
+    <Compartments />
+  </Class>
+  <Class Name="ConfBot.PlugIns.PlugInMgr" Collapsed="False">
+    <Position X="0.5" Y="17.4" Width="1.866232" />
+    <Compartments>
+      <Compartment Name="Properties" Collapsed="False" />
+      <Compartment Name="Methods" Collapsed="False" />
+      <Compartment Name="Fields" Collapsed="False" />
+    </Compartments>
+  </Class>
+  <Class Name="ConfBot.CmdMgr" Collapsed="False">
+    <Position X="0.5" Y="20.3" Width="2.6" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="False" />
+      <Compartment Name="Fields" Collapsed="False" />
+      <Compartment Name="Nested Types" Collapsed="False" />
+    </Compartments>
+  </Class>
+  <Class Name="ConfBot.Conference" Collapsed="False">
+    <Position X="0.5" Y="1.6" Width="2" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="False" />
+      <Compartment Name="Fields" Collapsed="False" />
+      <Compartment Name="Nested Types" Collapsed="False" />
+    </Compartments>
+  </Class>
+  <Class Name="ConfBot.Command" Collapsed="False">
+    <Position X="2.8" Y="0.5" Width="2.058678" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="False" />
+      <Compartment Name="Fields" Collapsed="False" />
+    </Compartments>
+  </Class>
+  <Class Name="ConfBot.PlugIns.PlugIn" Collapsed="False">
+    <Position X="5.3" Y="2.3" Width="1.555085" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="False" />
+      <Compartment Name="Fields" Collapsed="False" />
+    </Compartments>
+  </Class>
+</ClassDiagram>
