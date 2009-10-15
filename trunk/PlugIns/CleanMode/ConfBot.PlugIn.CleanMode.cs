@@ -7,12 +7,10 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
+using ConfBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using jabber;
-using jabber.protocol.client;
-using jabber.connection;
 using ConfBot;
 using ConfBot.PlugIns;
 
@@ -36,7 +34,7 @@ namespace ConfBot.PlugIns
 
 		Timer autoInsult;
 			
-		public CleanMode(Conference confObject) : base(confObject) {
+		public CleanMode(IJabberClient jabberClient,IConfigManager configManager, ILogger logger) : base(jabberClient, configManager, logger) {
 			#region Command Initialization
 			BotCmd tempCmd;
 			// Cleanmode Command
@@ -68,20 +66,20 @@ namespace ConfBot.PlugIns
 			char[] charAlpha = {'Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','ì','è','é','ò','à','ù'};
 			charAlphaDict.AddRange(charAlpha);
 			//clean Mode
-			cleanMode	= (this.confObj.GetSetting("CleanMode") == "on");
+			cleanMode	= (this._configManager.GetSetting("CleanMode") == "on");
 			//autoinsult Mode
-			autoInsultMode	= (this.confObj.GetSetting("AutoInsultMode") == "on");
+			autoInsultMode	= (this._configManager.GetSetting("AutoInsultMode") == "on");
 			//bad Dictionary
-			badDict		= this.confObj.GetSetting("BadDictionary").Split(',');
+			badDict		= this._configManager.GetSetting("BadDictionary").Split(',');
 			for (int ndx = 0; ndx < badDict.Length; ndx++) {
 				if (badWordDict.IndexOf(badDict[ndx].ToUpper()) < 0) {
 					badWordDict.Add(badDict[ndx].ToUpper());
 				}
 			}
 			//good Dictionary
-			goodDict	= this.confObj.GetSetting("GoodDictionary").Split(',');
+			goodDict	= this._configManager.GetSetting("GoodDictionary").Split(',');
 			//insult Dictionary
-			string[] insultList	= this.confObj.GetSetting("InsultDictionary").Split(',');
+			string[] insultList	= this._configManager.GetSetting("InsultDictionary").Split(',');
 			for (int ndx = 0; ndx < insultList.Length; ndx++) {
 				insultDict.Add(insultList[ndx]);
 			}
@@ -95,24 +93,24 @@ namespace ConfBot.PlugIns
 			Insult		= 4		
 		}
 		
-		public override bool ExecCommand(JID user, int CodeCmd, string Param) {
+		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
 			switch((Commands)CodeCmd) {
 				case Commands.CleanMode		: 
 												switch (Param) {
 													case "on" 	:	cleanMode	= true;
-																	confObj.SendMessage(user, "*CleanMode Activated*");
+																	_jabberClient.SendMessage(user, "*CleanMode Activated*");
 																	//ora lo salvo
-																	confObj.SetSetting("CleanMode", "on");
+																	_configManager.SetSetting("CleanMode", "on");
 																	break;
 													case "off"	:	cleanMode	= false;
-																	confObj.SendMessage(user, "*CleanMode Deactivated*");
+																	_jabberClient.SendMessage(user, "*CleanMode Deactivated*");
 																	//ora lo salvo
-																	confObj.SetSetting("CleanMode", "off");
+																	_configManager.SetSetting("CleanMode", "off");
 																	break;
 													default		:	if (cleanMode) {
-																		confObj.SendMessage(user, "_CleanMode is active_");
+																		_jabberClient.SendMessage(user, "_CleanMode is active_");
 																	} else {
-																		confObj.SendMessage(user, "_CleanMode is not active_");
+																		_jabberClient.SendMessage(user, "_CleanMode is not active_");
 																	}
 																	break;
 												}
@@ -120,19 +118,19 @@ namespace ConfBot.PlugIns
 				case Commands.AutoInsult	:	
 												switch (Param) {
 													case "on" 	:	autoInsultMode	= true;
-																	confObj.SendMessage(user, "*AutoInsult Activated*");
+																	_jabberClient.SendMessage(user, "*AutoInsult Activated*");
 																	//ora lo salvo
-																	confObj.SetSetting("AutoInsultMode", "on");
+																	_configManager.SetSetting("AutoInsultMode", "on");
 																	break;
 													case "off"	:	autoInsultMode	= false;
-																	confObj.SendMessage(user, "*AutoInsult Deactivated*");
+																	_jabberClient.SendMessage(user, "*AutoInsult Deactivated*");
 																	//ora lo salvo
-																	confObj.SetSetting("AutoInsultMode", "off");
+																	_configManager.SetSetting("AutoInsultMode", "off");
 																	break;
 													default		:	if (autoInsultMode) {
-																		confObj.SendMessage(user, "_AutoInsult is active_");
+																		_jabberClient.SendMessage(user, "_AutoInsult is active_");
 																	} else {
-																		confObj.SendMessage(user, "_AutoInsult is not active_");
+																		_jabberClient.SendMessage(user, "_AutoInsult is not active_");
 																	}
 																	break;
 												}
@@ -145,26 +143,27 @@ namespace ConfBot.PlugIns
 														newDict += insultDict[iNdx] + ',';
 													}							
 													newDict.Remove(insultDict.Count - 1);
-													this.confObj.SetSetting("InsultDictionary", newDict);
-													confObj.SendMessage(user, "insult _" + Param + "_ addedd");
+													this._configManager.SetSetting("InsultDictionary", newDict);
+													_jabberClient.SendMessage(user, "insult _" + Param + "_ addedd");
 												}
 												break;
 				case Commands.Insult		:
 												if (Param.Trim() != "") {
 													string destMsg = "";
 													destMsg	= Param.ToUpper();
-													JID userObj;
-													switch (confObj.GetUser(destMsg, out userObj)) {
-															case UserStatus.Unknown		:	confObj.SendMessage(user, "User _" + destMsg + "_ not exist.");
+													
+													IRosterItem userItem = _jabberClient.Roster[destMsg];
+													switch (userItem.status) {
+															case UserStatus.Unknown		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
 																							break;
-															case UserStatus.Away		:	confObj.SendMessage(user, "User _" + destMsg + "_ is away.");
+															case UserStatus.Away		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is away.");
 																							break;
-															case UserStatus.NotAvaiable	:	confObj.SendMessage(user, "User _" + destMsg + "_ is offline.");
+															case UserStatus.NotAvailable	:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is offline.");
 																							break;
 															default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
 																							String insult	= insultDict[rnd.Next(insultDict.Count)];
-																							confObj.SendMessage(userObj, "_" + insult + "_");
-																							confObj.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
+																							_jabberClient.SendMessage(userItem.JID, "_" + insult + "_");
+																							_jabberClient.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
 																							break;
 													}
 												}
@@ -219,124 +218,15 @@ namespace ConfBot.PlugIns
 				messageText = tmpOut;
 				return true;
 			} catch(Exception ex) {
-				confObj.LogMessageToFile(ex.Message);
+				_logger.LogMessage(ex.Message, LogLevel.Error);
 			}
 			return false;
 		}
 		
-		public override bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
+		public override bool msgCommand(ref IMessage msg, ref String newMsg, out bool command) {
 			command	= false;
 			newMsg = msg.Body;
-//			if (msg.Body.ToLower().StartsWith("/cleanmode")) {
-//				if (confObj.isAdmin(msg.From.Bare)) {
-//					//9 char + 1 space (optional)
-//					if (msg.Body.Length >= 10) {
-//						command = true;
-//						String tmpMsg = msg.Body.Remove(0, 10).Trim().ToLower();
-//						switch (tmpMsg) {
-//							case "on" 	:	cleanMode	= true;
-//											confObj.SendMessage(msg.From, "*CleanMode Activated*");
-//											//ora lo salvo
-//											confObj.SetSetting("CleanMode", "on");
-//											break;
-//							case "off"	:	cleanMode	= false;
-//											confObj.SendMessage(msg.From, "*CleanMode Deactivated*");
-//											//ora lo salvo
-//											confObj.SetSetting("CleanMode", "off");
-//											break;
-//							case "help"	:	String helpString = "*/cleanmode help*: aiuto\n";
-//											helpString += "*/cleanmode [on|off]*: attiva/disattiva il cleanmode\n";
-//											helpString += "*/insult [nickname]*: invia un insulto anonimo all'utente\n";
-//											helpString += "*/autoinsult [on|off]*: attiva/disattiva l'autoinsulto";
-//											confObj.SendMessage(msg.From, helpString);																		
-//											break;
-//											
-//							default		:	if (cleanMode) {
-//												confObj.SendMessage(msg.From, "_CleanMode is active_");
-//											} else {
-//												confObj.SendMessage(msg.From, "_CleanMode is not active_");
-//											}
-//											break;
-//						}
-//					}
-//				} else {
-//					confObj.SendMessage(msg.From, Conference.NOADMINMSG );
-//				}
-//				return true;
-//			} else if (msg.Body.ToLower().StartsWith("/autoinsult")) {
-//				if (confObj.isAdmin(msg.From.Bare)) {
-//					//11 char + 1 space (optional)
-//					if (msg.Body.Length >= 11) {
-//						command = true;
-//						String tmpMsg = msg.Body.Remove(0, 11).Trim().ToLower();
-//						switch (tmpMsg) {
-//							case "on" 	:	autoInsultMode	= true;
-//											confObj.SendMessage(msg.From, "*AutoInsult Activated*");
-//											//ora lo salvo
-//											confObj.SetSetting("AutoInsultMode", "on");
-//											break;
-//							case "off"	:	autoInsultMode	= false;
-//											confObj.SendMessage(msg.From, "*AutoInsult Deactivated*");
-//											//ora lo salvo
-//											confObj.SetSetting("AutoInsultMode", "off");
-//											break;
-//							default		:	if (autoInsultMode) {
-//												confObj.SendMessage(msg.From, "_AutoInsult is active_");
-//											} else {
-//												confObj.SendMessage(msg.From, "_AutoInsult is not active_");
-//											}
-//											break;
-//						}
-//					}
-//				}
-//				else {
-//					confObj.SendMessage(msg.From, Conference.NOADMINMSG );
-//				}
-//				return true;
-//			} else if (msg.Body.ToLower().StartsWith("/addinsult")) {
-//				if (confObj.isAdmin(msg.From.Bare)) {
-//					command = true;
-//					//10 char + 1 space
-//					if (msg.Body.Length > 11) {
-//						string newInsult = msg.Body.Remove(0, 11).Trim();
-//						string newDict = "";
-//						insultDict.Add(newInsult);
-//						for(int iNdx = 0; iNdx < insultDict.Count; iNdx++) {
-//							newDict += insultDict[iNdx] + ',';
-//						}							
-//						newDict.Remove(insultDict.Count - 1);
-//						this.confObj.SetSetting("InsultDictionary", newDict);
-//						confObj.SendMessage(msg.From, "insult _" + newInsult + "_ addedd");
-//					}
-//					return true;
-//				} else {
-//					confObj.SendMessage(msg.From, Conference.NOADMINMSG );
-//				}
-//			} else if (msg.Body.ToLower().StartsWith("/insult")) {
-//				command = true;
-//				string destName = "";
-//				string destMsg = "";
-//				//7 char + 1 space
-//				if (msg.Body.Length > 8) {
-//					destName = msg.Body.Remove(0, 8).Trim();
-//					destMsg	= destName.ToUpper();
-//					JID user;
-//					switch (confObj.GetUser(destMsg, out user)) {
-//							case UserStatus.Unknown		:	confObj.SendMessage(msg.From, "User _" + destMsg + "_ not exist.");
-//															break;
-//							case UserStatus.Away		:	confObj.SendMessage(msg.From, "User _" + destMsg + "_ is away.");
-//															break;
-//							case UserStatus.NotAvaiable	:	confObj.SendMessage(msg.From, "User _" + destMsg + "_ is offline.");
-//															break;
-//							default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
-//															String insult	= insultDict[rnd.Next(insultDict.Count)];
-//															confObj.SendMessage(user, "_" + insult + "_");
-//															confObj.SendMessage(msg.From, Conference.botName + " send _" + insult + "_ to _" + destName + "_");
-//															break;
-//					}
-//				}
-//				return true;
-//			}
+//			
 			
 			if (cleanMode) {
 				try {
@@ -345,21 +235,16 @@ namespace ConfBot.PlugIns
 					if (msgBody.Trim() != "") {
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
-							confObj.SendMessage(msg.From, msgBody);
+							_jabberClient.SendMessage(msg.From, msgBody);
 						}
 					}
 				}
 				catch(Exception ex) {
-					confObj.LogMessageToFile(ex.Message);
+					_logger.LogMessage(ex.Message, LogLevel.Error);
 				}
 			}
 			return true;
 		}
-		
-//		public string Help() {
-//			string helpString = "*/cleanmode help*: aiuto su cleanmode";
-//			return helpString;
-//		}
 	
 		private void SendAutoInsult(object stateInfo) {
 			int newTime = (new Random(unchecked((int)DateTime.Now.Ticks))).Next(300 * 1000, 3600 * 1000);
@@ -367,14 +252,14 @@ namespace ConfBot.PlugIns
 			if (autoInsultMode) {
 				Random rndUser		= new Random(unchecked((int)DateTime.Now.Ticks));
 				Random rndMsg		= new Random(unchecked((int)DateTime.Now.Ticks));
-				List<JID> lstUsers	= new List<JID>();
-				foreach(JID user in confObj.rm) {
-					if (confObj.pm.IsAvailable(user)) {
-						lstUsers.Add(user);
+				List<IJID> lstUsers	= new List<IJID>();
+				foreach(IRosterItem user in _jabberClient.Roster) {
+					if (user.status == UserStatus.OnLine) {
+						lstUsers.Add(user.JID);
 					}
 				}
 				if (lstUsers.Count > 0) {
-					confObj.SendMessage(lstUsers[rndUser.Next(lstUsers.Count)], Conference.botName + " ti manda un insulto gratuito: _" + insultDict[rndMsg.Next(insultDict.Count)] + "_");
+					_jabberClient.SendMessage(lstUsers[rndUser.Next(lstUsers.Count)], Conference.botName + " ti manda un insulto gratuito: _" + insultDict[rndMsg.Next(insultDict.Count)] + "_");
 				}
 			}
 		}

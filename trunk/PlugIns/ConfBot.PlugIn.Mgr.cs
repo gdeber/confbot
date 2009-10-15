@@ -7,14 +7,12 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
+using ConfBot.Types;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
-using System.Collections.Generic;
-using jabber;
-using jabber.protocol.client;
 using ConfBot.PlugIns;
-
 
 //using PlugInList	= System.Collections.Generic.List<ConfBot.PlugIns.PlugIn>;
 
@@ -25,12 +23,15 @@ namespace ConfBot.PlugIns
 	/// </summary>
 	public class PlugInMgr
 	{
-		private Conference	confObj;
+		private ILogger	_logger;
+		private Conference _confObj;
 		private List<PlugIn>	pluginList = new List<PlugIn>();
 		
-		public PlugInMgr(Conference confObj, string dirPlugIns)
+		public PlugInMgr(ILogger logger, Conference confObj, string dirPlugIns)
 		{
-			this.confObj = confObj;
+			this._logger = logger;
+			_confObj = confObj;
+			
 			if (System.IO.Directory.Exists(dirPlugIns))
 			{
 				foreach (String fileName in System.IO.Directory.GetFiles(dirPlugIns, "*.dll")) {
@@ -48,7 +49,7 @@ namespace ConfBot.PlugIns
 			}
 			else 
 			{
-				confObj.LogMessageToFile("No plugin directory");
+				_logger.LogMessage("No plugin directory", LogLevel.Warning);
 			}
 		}
 		
@@ -63,7 +64,7 @@ namespace ConfBot.PlugIns
 					if (Ty.IsDefined(typeof(PlugInAttribute), false))
 					{
 						object[] paramsPlug = new object[1];
-						paramsPlug[0]	= confObj;
+						paramsPlug[0]	= _confObj;
 						pluginList.Add( (PlugIn)Activator.CreateInstance(Ty, paramsPlug));
 					}                   
 				}
@@ -73,7 +74,7 @@ namespace ConfBot.PlugIns
 			}
 		}
 		
-		public bool msgCommand(ref Message msg, out String newMsg)
+		public bool msgCommand(ref IMessage msg, out String newMsg)
 		{
 			bool command = false;
 			newMsg = msg.Body;
@@ -92,7 +93,7 @@ namespace ConfBot.PlugIns
 					msg.Body =  newMsg;
 				}
 			} catch(Exception ex) {
-				confObj.LogMessageToFile(ex.Message);
+				_logger.LogMessage(ex.Message, LogLevel.Error);
 			}
 			return false;
 		}
@@ -118,7 +119,7 @@ namespace ConfBot.PlugIns
 					}
 				}
 			} catch(Exception ex) {
-				confObj.LogMessageToFile(ex.Message);
+				_logger.LogMessage(ex.Message, LogLevel.Error);
 			}
 			return tmp;
 		}

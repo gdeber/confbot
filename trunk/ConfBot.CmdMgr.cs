@@ -8,7 +8,6 @@
  */
 using System;
 using System.Collections.Generic;
-using jabber;
 using ConfBot;
 using ConfBot.PlugIns;
 
@@ -33,7 +32,7 @@ namespace ConfBot
 			return listCmd;
 		}
 		
-		public virtual bool ExecCommand(JID user, int CodeCmd, string Param) {
+		public virtual bool ExecCommand(IJID user, int CodeCmd, string Param) {
 			return false;
 		}
 
@@ -66,11 +65,11 @@ namespace ConfBot
 		}
 
 		private Dictionary<string, botCommand> cmdDict = new Dictionary<string, botCommand>();
-		private Conference confObject;
+		private IJabberClient _jabberClient;
 		
-		public CmdMgr(Conference confObj)
+		public CmdMgr(IJabberClient jabberClient)
 		{
-			confObject = confObj;
+			_jabberClient = jabberClient;
 		}
 		
 		public void AddCommand(BotCmd command, Command refCmdClass) {
@@ -88,7 +87,7 @@ namespace ConfBot
 			}
 		}
 
-		public bool ExecCommand(JID user, string Message) {
+		public bool ExecCommand(IJID user, string Message) {
 			
 			if (Message.Trim().StartsWith("/")) {
 				string lsTemp	= Message.Trim().ToLower();
@@ -104,14 +103,14 @@ namespace ConfBot
 				botCommand cmd;
 				if (cmdDict.TryGetValue(lsCommand, out cmd)) {
 					if (cmd.Admin) { 
-						if (!confObject.isAdmin(user.Bare)) {
-							confObject.SendMessage(user, Conference.NOADMINMSG);
+						if (!_jabberClient.Roster[user.Bare].IsAdmin) {
+							_jabberClient.SendMessage(user, Conference.NOADMINMSG);
 							return true;
 						}
 					}
 					cmd.CmdClass.ExecCommand(user, cmd.Code, lsParam);
 				} else {
-					confObject.SendMessage(user, "Unknown Command");
+					_jabberClient.SendMessage(user, "Unknown Command");
 				}
 				return true;
 			} else {
