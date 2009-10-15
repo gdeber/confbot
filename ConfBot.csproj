@@ -44,34 +44,24 @@
       <HintPath>dll_win\jabber-net.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="NUnit.Framework">
+      <HintPath>$(SharpDevelopBinPath)\Tools\NUnit\NUnit.Framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.cs" />
-    <None Include="PlugIns\ButterflyEffect\bin\Release\ButterflyEffect.dll">
-      <Link>PlugIns\ButterflyEffect.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="PlugIns\Citazioni\bin\Release\Citazioni.dll">
-      <Link>PlugIns\Citazioni.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="PlugIns\CleanMode\bin\Release\Cleanmode.dll">
-      <Link>PlugIns\Cleanmode.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <Content Include="ConfBot.cd" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ConfBot.config">
+    <Compile Include="Test\TestConfigManager.cs" />
+    <None Include="Doc\ConfBot.cd" />
+    <None Include="Doc\ConfBot.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="PlugIns" />
+    <Folder Include="Doc" />
+    <Folder Include="Test" />
     <ProjectReference Include="ConferenceBot.csproj">
       <Project>{D8472D76-1BCE-42B1-BADE-F75619DCD631}</Project>
       <Name>ConferenceBot</Name>

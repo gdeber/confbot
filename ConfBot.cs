@@ -9,9 +9,6 @@
 
 using System;
 using System.Threading;
-using jabber;
-using jabber.client;
-using jabber.connection;
 using System.IO;
 using System.Configuration;
 using ConfBot;
@@ -21,6 +18,9 @@ namespace ConfBot
 	class ConfBot
 	{
 		static Conference conf;
+		static JabberClient _jabberClient;
+	 	static Logger _logger;
+		static ConfigManager _configMgr;
 		
 		const string CONFIGFILE	= "ConfBot.config";
 
@@ -28,7 +28,11 @@ namespace ConfBot
 		{
 			ExeConfigurationFileMap configFile = new ExeConfigurationFileMap();
 			configFile.ExeConfigFilename = args.Length > 0 ? args[0]: (CONFIGFILE) ;
-			conf = new Conference(ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None));
+			_configMgr = new ConfigManager(ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None));
+			_logger = new Logger(_configMgr.GetSetting("LogFile"));
+			_jabberClient = new JabberClient(_configMgr, _logger);
+			conf = new Conference(_configMgr,_jabberClient,_logger);
+			
 			Thread confThread = new Thread(conf.Run);
 			confThread.Start();
 			

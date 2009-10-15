@@ -7,6 +7,12 @@
     <RootNamespace>Cleanmode</RootNamespace>
     <AssemblyName>Cleanmode</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <SourceAnalysisOverrideSettingsFile>C:\Documents and Settings\gualtiero\Application Data\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -18,11 +24,18 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
-    <DebugSymbols>False</DebugSymbols>
+    <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
@@ -36,9 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.PlugIn.CleanMode.cs" />
-    <Content Include="Cleanmode.cd" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Doc\Cleanmode.cd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ConferenceBot.csproj">
@@ -46,5 +59,7 @@
       <Name>ConferenceBot</Name>
       <Private>False</Private>
     </ProjectReference>
+    <Folder Include="Doc" />
+    <Folder Include="Properties" />
   </ItemGroup>
 </Project>

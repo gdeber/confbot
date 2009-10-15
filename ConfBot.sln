@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-# SharpDevelop 3.0.0.3800
+# SharpDevelop 3.1.0.4977
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConferenceBot", "ConferenceBot.csproj", "{D8472D76-1BCE-42B1-BADE-F75619DCD631}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleanmode", "PlugIns\CleanMode\Cleanmode.csproj", "{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfBot", "ConfBot.csproj", "549F871A-A5C4-4140-8698-6F5C8B94D686"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citazioni", "PlugIns\Citazioni\Citazioni.csproj", "{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleanmode", "PlugIns\CleanMode\Cleanmode.csproj", "{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButterflyEffect", "PlugIns\ButterflyEffect\ButterflyEffect.csproj", "{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citazioni", "PlugIns\Citazioni\Citazioni.csproj", "{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,21 +22,21 @@ Global
 		{D8472D76-1BCE-42B1-BADE-F75619DCD631}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D8472D76-1BCE-42B1-BADE-F75619DCD631}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D8472D76-1BCE-42B1-BADE-F75619DCD631}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Debug|Any CPU.Build.0 = Release|Any CPU
-		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		549F871A-A5C4-4140-8698-6F5C8B94D686.Debug|Any CPU.Build.0 = Debug|Any CPU
 		549F871A-A5C4-4140-8698-6F5C8B94D686.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		549F871A-A5C4-4140-8698-6F5C8B94D686.Release|Any CPU.Build.0 = Release|Any CPU
 		549F871A-A5C4-4140-8698-6F5C8B94D686.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Debug|Any CPU.Build.0 = Release|Any CPU
-		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Debug|Any CPU.Build.0 = Release|Any CPU
-		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFFB2E05-F4A6-423F-8B44-EF34538E9F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5C9CFD45-3BD6-4B08-ACE4-4667EBEC2402}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0347ED39-485F-49CF-8F89-3D1F4F4D35AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 EndGlobal

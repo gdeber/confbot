@@ -10,9 +10,6 @@
 using System;
 using System.Globalization;
 using System.Collections.Generic;
-using jabber;
-using jabber.client;
-using jabber.protocol.client;
 using ConfBot;
 
 namespace ConfBot.PlugIns
@@ -22,13 +19,17 @@ namespace ConfBot.PlugIns
 	/// </summary>
 	public abstract class PlugIn : ConfBot.Command
 	{
-		protected Conference confObj;
+		protected IJabberClient _jabberClient;
+		protected ILogger _logger;
+		protected IConfigManager _configManager;
 		
-		public PlugIn (Conference confObj) : base() {
-			this.confObj = confObj;
+		public PlugIn (IJabberClient jabberClient, IConfigManager configManager, ILogger logger) : base() {
+			this._jabberClient = jabberClient;
+			this._logger = logger;
+			this._configManager = configManager;
 		}
 		
-		public virtual bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
+		public virtual bool msgCommand(ref IMessage msg, ref String newMsg, out bool command) {
 			command = false;
 			return true;
 		}

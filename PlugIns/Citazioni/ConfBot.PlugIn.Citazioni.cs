@@ -7,16 +7,14 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
+using ConfBot.Types;
 using System;
-using System.Net;
 using System.IO;
+using System.Net;
 using System.Threading;
-using jabber;
-using jabber.connection;
-using jabber.protocol.client;
 using ConfBot;
-using ConfBot.PlugIns;
 using ConfBot.Lib;
+using ConfBot.PlugIns;
 
 namespace ConfBot.PlugIns
 {
@@ -37,8 +35,8 @@ namespace ConfBot.PlugIns
 			
 		bool autoQuoteMode = true;
 		Timer autoQuote;
-
-		public Citazioni(Conference confObject) : base(confObject) {
+		
+		public Citazioni(IJabberClient jabberClient,IConfigManager configManager, ILogger logger) : base(jabberClient, configManager, logger) {
 			#region Command Initialization
 			BotCmd tempCmd;
 			// Cleanmode Command
@@ -56,7 +54,7 @@ namespace ConfBot.PlugIns
 			#endregion
 
 			//autoQuuote Mode
-			autoQuoteMode	= (this.confObj.GetSetting("AutoQuoteMode") == "on");
+			autoQuoteMode	= (this._configManager.GetSetting("AutoQuoteMode") == "on");
 		}
 
 		#region Command Class override
@@ -65,33 +63,33 @@ namespace ConfBot.PlugIns
 			AutoQuote	= 2	
 		}
 		
-		public override bool ExecCommand(JID user, int CodeCmd, string Param) {
+		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
 			switch((Commands)CodeCmd) {
 				case Commands.Citazione		: 
 												string author = "";
 												string citazione = '\n' + "_" + getCitazione(ref author) + "_";
 												if (author.Trim() == "")
-													confObj.SendMessage(user, citazione);
+													_jabberClient.SendMessage(user, citazione);
 												else {
-													confObj.SendMessage(user, citazione + '\n' + "*_" + author + "_*");
+													_jabberClient.SendMessage(user, citazione + '\n' + "*_" + author + "_*");
 												}
 												break;
 				case Commands.AutoQuote	:	
 												switch (Param) {
 													case "on" 	:	autoQuoteMode	= true;
-																	confObj.SendMessage(user, "*AutoQuote Activated*");
+																	_jabberClient.SendMessage(user, "*AutoQuote Activated*");
 																	//ora lo salvo
-																	confObj.SetSetting("AutoQuoteMode", "on");
+																	_configManager.SetSetting("AutoQuoteMode", "on");
 																	break;
 													case "off"	:	autoQuoteMode	= false;
-																	confObj.SendMessage(user, "*AutoQuote Deactivated*");
+																	_jabberClient.SendMessage(user, "*AutoQuote Deactivated*");
 																	//ora lo salvo
-																	confObj.SetSetting("AutoQuoteMode", "off");
+																	_configManager.SetSetting("AutoQuoteMode", "off");
 																	break;
 													default		:	if (autoQuoteMode) {
-																		confObj.SendMessage(user, "_AutoQuote is active_");
+																		_jabberClient.SendMessage(user, "_AutoQuote is active_");
 																	} else {
-																		confObj.SendMessage(user, "_AutoQuote is not active_");
+																		_jabberClient.SendMessage(user, "_AutoQuote is not active_");
 																	}
 																	break;
 												}
@@ -101,28 +99,13 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 	
-		
-		public override bool msgCommand(ref Message msg, ref String newMsg, out bool command) {
+		public override bool msgCommand(ref IMessage msg, ref String newMsg, out bool command)
+		{
 			command	= false;
-//			newMsg = msg.Body;
-//			if (msg.Body.ToLower().StartsWith("/citazione")) {
-//				string author = "";
-//				string citazione = '\n' + "_" + getCitazione(ref author) + "_";
-//				if (author.Trim() == "")
-//					this.confObj.SendMessage(msg.From, citazione);
-//				else {
-//					this.confObj.SendMessage(msg.From, citazione + '\n' + "*_" + author + "_*");
-//				}
-//				command = true;
-//			}
 			return true;
 		}
 		
-//		public override string Help() {
-//			string helpString = "*/citazione help*: aiuto su citazioni";
-//			return helpString;
-//		}
-		
+
 		public string getCitazione(ref string Author) {
 			string	lsText = "";
 			Author = "";
@@ -131,7 +114,9 @@ namespace ConfBot.PlugIns
 				HttpWebResponse	loResponse;
 				Stream			loStream;
 				loRequest.Method = "GET";
-				loRequest.Proxy = confObj.GetProxy();
+				
+				loRequest.Proxy = this.GetProxy();
+				
 				loResponse	= (HttpWebResponse) loRequest.GetResponse();
 				loStream	= loResponse.GetResponseStream();
 				StreamReader loRead = new StreamReader(loStream);
@@ -172,12 +157,30 @@ namespace ConfBot.PlugIns
 					citazione += '\n' + "*_" + author + "_*";
 				}
 
-				foreach(JID user in confObj.rm) {
-					if (confObj.pm.IsAvailable(user)) {
-						confObj.SendMessage(user, Conference.botName + " propone una perla: " + citazione);
+				foreach(IRosterItem user in _jabberClient.Roster) {
+					if (user.status == UserStatus.OnLine) {
+						_jabberClient.SendMessage(user.JID, Conference.botName + " propone una perla: " + citazione);
 					}
 				}
 			}
+		}
+		
+		private WebProxy GetProxy() 
+		{
+			WebProxy result = new WebProxy();
+			if (_configManager.GetSetting("ProxyHost").Trim() == "")
+			{
+				return null;
+			}
+			else
+			{
+				string proxyHost = _configManager.GetSetting("ProxyHost");
+				int proxyPort = Int32.Parse(_configManager.GetSetting("ProxyPort"));
+				
+				result.Address= new Uri(proxyHost + ':' + proxyPort.ToString());
+				return result;
+			}
+			
 		}
 
 		public override bool IsThread() {

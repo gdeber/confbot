@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using jabber;
-using jabber.protocol.client;
-using jabber.connection;
 using ConfBot;
 using ConfBot.PlugIns;
+using ConfBot.Types;
 
 namespace ConfBot.PlugIns
 {
@@ -27,7 +25,7 @@ namespace ConfBot.PlugIns
 			return farfalledMsg;
 		}
 
-		public ButterflyEffect(Conference confObj) : base(confObj){
+		public ButterflyEffect(IJabberClient jabberClient,IConfigManager configManager, ILogger logger) : base(jabberClient, configManager, logger){
 			#region Command Initialization
 			BotCmd tempCmd;
 			// Butterfly Command
@@ -37,7 +35,7 @@ namespace ConfBot.PlugIns
 			tempCmd.Help	= "[on|off] attiva/disattiva il Butterfly Effect";
 			listCmd.Add(tempCmd);
 			#endregion
-			Active	= (this.confObj.GetSetting("Butterfly") == "on");
+			Active	= (this._configManager.GetSetting("Butterfly") == "on");
 		}
 
 		#region Command Class override
@@ -45,28 +43,28 @@ namespace ConfBot.PlugIns
 			Butterfly	= 1		
 		}
 		
-		public override bool ExecCommand(JID user, int CodeCmd, string Param) {
+		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
 			switch((Commands)CodeCmd) {
 				case Commands.Butterfly		: 
 												switch (Param) {
 													case "on" 	:	Active	= true;
-																	confObj.SendMessage(user, "*Butterfly Activated*");
+																	_jabberClient.SendMessage(user, "*Butterfly Activated*");
 																	//ora lo salvo
-																	confObj.SetSetting("Butterfly", "on");
+																	_configManager.SetSetting("Butterfly", "on");
 																	break;
 													case "off"	:	Active	= false;
-																	confObj.SendMessage(user, "*Butterfly Deactivated*");
+																	_jabberClient.SendMessage(user, "*Butterfly Deactivated*");
 																	//ora lo salvo
-																	confObj.SetSetting("Butterfly", "off");
+																	_configManager.SetSetting("Butterfly", "off");
 																	break;
 													case "help"	:	String helpString = "*butterfly* riscrive il tuo messaggio in alfabeto farfallino\n";
 																	helpString += "*/Butterfly help*: aiuto\n";
-																	confObj.SendMessage(user, helpString);
+																	_jabberClient.SendMessage(user, helpString);
 																	break;
 													default		:	if (Active) {
-																		confObj.SendMessage(user, "Butterfly is active_");
+																		_jabberClient.SendMessage(user, "Butterfly is active_");
 																	} else {
-																		confObj.SendMessage(user, "Butterfly is not active_");
+																		_jabberClient.SendMessage(user, "Butterfly is not active_");
 																	}
 																	break;
 												}
@@ -76,7 +74,7 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 
-		public override bool msgCommand(ref Message msg, ref string newMsg, out bool command)
+		public override bool msgCommand(ref IMessage msg, ref string newMsg, out bool command)
 		{
 			command	= false;
 			newMsg = msg.Body;
@@ -88,83 +86,16 @@ namespace ConfBot.PlugIns
 					if (msgBody.Trim() != "") {
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
-							confObj.SendMessage(msg.From, msgBody);
+							_jabberClient.SendMessage(msg.From, msgBody);
 						}
 					}
 				}
 				catch(Exception ex) {
-					confObj.LogMessageToFile(ex.Message);
+					_logger.LogMessage(ex.Message, LogLevel.Error);
 				}
 			}
 			return true;
-
-//			command = false;
-//			try {
-//				
-//				//potrebbe essere un comando
-//				if (msg.Body.ToLower().StartsWith("/butterfly"))
-//				{
-//					command = true;
-//					if (confObj.isAdmin(msg.From.Bare))
-//					{
-//						//se più lungo significa che c'è il parametro del comando
-//						if (msg.Body.Length >= 10)
-//						{
-//							String tmpMsg = msg.Body.Remove(0, 10).Trim().ToLower();
-//							switch (tmpMsg) {
-//									case "on": 	Active = true;
-//												confObj.SendMessage(msg.From, "*Butterfly Activated*");
-//												break;
-//
-//									case "off":	Active = false;
-//												confObj.SendMessage(msg.From, "*Butterfly DeActivated*");
-//												break;
-//									
-//									case "help":String helpString = "*butterfly* riscrive il tuo messaggio in alfabeto farfallino\n";
-//												helpString += "*/Butterfly help*: aiuto\n";
-//												confObj.SendMessage(msg.From, helpString);
-//												break;
-//									
-//									default:	if (Active) {
-//													confObj.SendMessage(msg.From, "_Butterfly is active_");
-//												} else {
-//													confObj.SendMessage(msg.From, "_Butterfly is not active_");
-//												}
-//												break;
-//							}
-//						}
-//						else{
-//							confObj.SendMessage(msg.From, "Che dice?!");
-//						}
-//					}
-//					else
-//					{
-//						confObj.SendMessage(msg.From, Conference.NOADMINMSG);
-//					}
-//					
-//				}
-//				else
-//				{
-//					//non è un comando quindi devo crittografare il msg se il plugin è attivo
-//					if (Active)
-//					{
-//						newMsg= msg.Body;
-//						newMsg = farfallizza(newMsg);
-//					}
-//				}
-//				
-//				return true;
-//				
-//			} catch (Exception e) {
-//				confObj.LogMessageToFile(e.Message);
-//				return false;
-//			}
-			
+	
 		}
-
-//		public string Help()
-//		{
-//			return "*/butterfly help*: aiuto su butterfly";
-//		}
 	}
 }
