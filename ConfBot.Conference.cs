@@ -40,6 +40,9 @@ namespace ConfBot
 		static CmdMgr				cmdMgr;
 		static PlugIns.PlugInMgr	plugMgr;
 
+		private List<string>	paBanned	= new List<string>();
+		private List<string>	paNoReply	= new List<string>();
+		
 		//private bool terminate = false;
 		
 		#region Constructor
@@ -101,6 +104,30 @@ namespace ConfBot
 			tempCmd.Admin	= true;
 			tempCmd.Help	= "cambia il nickname di un utente";
 			listCmd.Add(tempCmd);
+			// Ban Command
+			tempCmd.Command	= "ban";
+			tempCmd.Code			= Convert.ToInt32(Commands.Ban);
+			tempCmd.Admin		= true;
+			tempCmd.Help			= "butta fuori un utente dalla confernce";
+			listCmd.Add(tempCmd);
+			// UnBan Command
+			tempCmd.Command	= "unban";
+			tempCmd.Code			= Convert.ToInt32(Commands.UnBan);
+			tempCmd.Admin		= true;
+			tempCmd.Help			= "riammette un utente nella confernce";
+			listCmd.Add(tempCmd);
+			// NoReply Command
+			tempCmd.Command	= "noreply";
+			tempCmd.Code			= Convert.ToInt32(Commands.NoReply);
+			tempCmd.Admin		= true;
+			tempCmd.Help			= "impone la modalità ReadOnly ad un utente";
+			listCmd.Add(tempCmd);
+			// Reply Command
+			tempCmd.Command	= "reply";
+			tempCmd.Code			= Convert.ToInt32(Commands.Reply);
+			tempCmd.Admin		= true;
+			tempCmd.Help			= "toglie dalla modalità ReadOnly un utente";
+			listCmd.Add(tempCmd);
 			#endregion
 			
 			confConf	= config;
@@ -127,8 +154,6 @@ namespace ConfBot
 				PluginDir = PLUGINDIR;
 			}
 
-			
-
 			//command manager
 			cmdMgr	= new CmdMgr(_jabbberClient);
 			cmdMgr.AddCommands(this);
@@ -151,7 +176,11 @@ namespace ConfBot
 			Time	= 6,
 			Ver		= 7,
 			Help	= 8,
-			Nick	= 9
+			Nick	= 9,
+			Ban	= 10,
+			UnBan	= 11,
+			NoReply	= 12,
+			Reply	= 13
 		}
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
@@ -247,6 +276,72 @@ namespace ConfBot
 												}
 											}
 											break;
+				case Commands.Ban		:
+											if (Param != "") {
+												IRosterItem userObj;
+												string	lsNick	= "";
+												GetUser(lsNick, out userObj);
+												if (userObj == null) {
+													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
+												} else {
+													if (paBanned.IndexOf(userObj.JID.User) >= 0) {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già bannato");
+													} else {
+														paBanned.Add(userObj.JID.User);
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* bannato con successo");
+													}
+												}
+											}
+											break;
+				case Commands.UnBan		:
+											if (Param != "") {
+												IRosterItem userObj;
+												string	lsNick	= "";
+												GetUser(lsNick, out userObj);
+												if (userObj == null) {
+													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
+												} else {
+													if (paBanned.Remove(userObj.JID.User)) {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* riabilitato con successo");
+													} else {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* non risulta bannato");
+													}
+												}
+											}
+											break;
+				case Commands.NoReply		:
+											if (Param != "") {
+												IRosterItem userObj;
+												string	lsNick	= "";
+												GetUser(lsNick, out userObj);
+												if (userObj == null) {
+													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
+												} else {
+													if (paNoReply.IndexOf(userObj.JID.User) >= 0) {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già in modalità ReadOnly");
+													} else {
+														paNoReply.Add(userObj.JID.User);
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* è ora in modallità ReadOnly");
+													}
+												}
+											}
+											break;
+				case Commands.Reply		:
+											if (Param != "") {
+												IRosterItem userObj;
+												string	lsNick	= "";
+												GetUser(lsNick, out userObj);
+												if (userObj == null) {
+													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
+												} else {
+													if (paNoReply.Remove(userObj.JID.User)) {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* tolto dalla modalità ReadOnly");
+													} else {
+														_jabbberClient.SendMessage(user, "*" + lsNick + "* non risulta in modalità ReadOnly");
+													}
+												}
+											}
+											break;
 			}
 			return true;
 		}
@@ -323,27 +418,36 @@ namespace ConfBot
 			}
 			else
 			{
-				if (!cmdMgr.ExecCommand(message.From, message.Body)) {
-					string msgBody	= message.Body;
-					foreach (IRosterItem rosterItem in _jabbberClient.Roster)
-					{
-						//se non sono quello che l'ha mandato
-						if (!rosterItem.JID.Bare.Equals(message.From.Bare))
+				
+				// se l'utente è bannato o in modalità ReadOnly
+				if ((paBanned.IndexOf(message.From.User) >= 0) || (paNoReply.IndexOf(message.From.User) >= 0)) {
+					_jabbberClient.SendMessage(message.From, "Sorry, you are unable to send messages.");
+				} else {
+					if (!cmdMgr.ExecCommand(message.From, message.Body)) {
+						string msgBody	= message.Body;
+						foreach (IRosterItem rosterItem in _jabbberClient.Roster)
 						{
-							//ottengo il roster item che è più informativo
-							//jabber.protocol.iq.Item rosterItem = rm[user];
-							//tipo il nickname
-							
-							String FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
-							if (FromUserName == null)
+							//se non sono quello che l'ha mandato
+							if (!rosterItem.JID.Bare.Equals(message.From.Bare))
 							{
-								//se non c'è il nickname uso il nome utente
-								FromUserName = rosterItem.JID.User;
+								// se l'utente non è bannato
+								if (paBanned.IndexOf(rosterItem.JID.User) < 0) {
+								
+									//ottengo il roster item che è più informativo
+									//jabber.protocol.iq.Item rosterItem = rm[user];
+									//tipo il nickname
+									
+									String FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
+									if (FromUserName == null)
+									{
+										//se non c'è il nickname uso il nome utente
+										FromUserName = rosterItem.JID.User;
+									}
+									
+									//Andrew dice di mandare lo stesso...
+									_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
+								}
 							}
-							
-							//Andrew dice di mandare lo stesso...
-							_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
-							
 						}
 					}
 				}
