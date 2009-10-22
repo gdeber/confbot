@@ -108,13 +108,13 @@ namespace ConfBot
 			tempCmd.Command	= "ban";
 			tempCmd.Code			= Convert.ToInt32(Commands.Ban);
 			tempCmd.Admin		= true;
-			tempCmd.Help			= "butta fuori un utente dalla confernce";
+			tempCmd.Help			= "butta fuori un utente dalla conference";
 			listCmd.Add(tempCmd);
 			// UnBan Command
 			tempCmd.Command	= "unban";
 			tempCmd.Code			= Convert.ToInt32(Commands.UnBan);
 			tempCmd.Admin		= true;
-			tempCmd.Help			= "riammette un utente nella confernce";
+			tempCmd.Help			= "riammette un utente nella conference";
 			listCmd.Add(tempCmd);
 			// NoReply Command
 			tempCmd.Command	= "noreply";
@@ -279,7 +279,7 @@ namespace ConfBot
 				case Commands.Ban		:
 											if (Param != "") {
 												IRosterItem userObj;
-												string	lsNick	= "";
+												string	lsNick	= Param;
 												GetUser(lsNick, out userObj);
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
@@ -296,7 +296,7 @@ namespace ConfBot
 				case Commands.UnBan		:
 											if (Param != "") {
 												IRosterItem userObj;
-												string	lsNick	= "";
+												string	lsNick	= Param;
 												GetUser(lsNick, out userObj);
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
@@ -312,7 +312,7 @@ namespace ConfBot
 				case Commands.NoReply		:
 											if (Param != "") {
 												IRosterItem userObj;
-												string	lsNick	= "";
+												string	lsNick	= Param;
 												GetUser(lsNick, out userObj);
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
@@ -329,7 +329,7 @@ namespace ConfBot
 				case Commands.Reply		:
 											if (Param != "") {
 												IRosterItem userObj;
-												string	lsNick	= "";
+												string	lsNick	= Param;
 												GetUser(lsNick, out userObj);
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
