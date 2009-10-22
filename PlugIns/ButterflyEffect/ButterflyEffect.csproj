@@ -36,13 +36,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.PlugIn.ButterflyEffect.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ConferenceBot.csproj">
       <Project>{D8472D76-1BCE-42B1-BADE-F75619DCD631}</Project>
       <Name>ConferenceBot</Name>
     </ProjectReference>
+    <Folder Include="Doc" />
+    <Folder Include="Properties" />
   </ItemGroup>
 </Project>

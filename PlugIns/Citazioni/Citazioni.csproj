@@ -36,9 +36,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ConfBot.PlugIn.Citazioni.cs" />
-    <Content Include="Citazioni.cd" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Doc\Citazioni.cd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ConferenceBot.csproj">
@@ -46,5 +46,7 @@
       <Name>ConferenceBot</Name>
       <Private>False</Private>
     </ProjectReference>
+    <Folder Include="Doc" />
+    <Folder Include="Properties" />
   </ItemGroup>
 </Project>
