@@ -24,14 +24,16 @@ namespace ConfBot.PlugIns
 	public class PlugInMgr
 	{
 		private ILogger	_logger;
-		private Conference _confObj;
+		private IJabberClient _jabberClient;
+		private IConfigManager _configManager;
 		private List<PlugIn>	pluginList = new List<PlugIn>();
 		
-		public PlugInMgr(ILogger logger, Conference confObj, string dirPlugIns)
+		public PlugInMgr(IJabberClient jabberClient, IConfigManager configMgr, ILogger logger, string dirPlugIns)
 		{
 			this._logger = logger;
-			_confObj = confObj;
-			
+			this._jabberClient = jabberClient;
+			this._configManager = configMgr;
+	
 			if (System.IO.Directory.Exists(dirPlugIns))
 			{
 				foreach (String fileName in System.IO.Directory.GetFiles(dirPlugIns, "*.dll")) {
@@ -63,39 +65,42 @@ namespace ConfBot.PlugIns
 				{
 					if (Ty.IsDefined(typeof(PlugInAttribute), false))
 					{
-						object[] paramsPlug = new object[1];
-						paramsPlug[0]	= _confObj;
+						object[] paramsPlug = new object[3];
+						
+						//ricordo che il plugin ha come costruttore 
+						//public PlugIn (IJabberClient jabberClient, IConfigManager configManager, ILogger logger)
+						paramsPlug[0]	= _jabberClient;
+						paramsPlug[1]	= _configManager;
+						paramsPlug[2]	= _logger;
 						pluginList.Add( (PlugIn)Activator.CreateInstance(Ty, paramsPlug));
+						
+						_logger.LogMessage("Created instance of " + fileName, LogLevel.Message);
 					}                   
 				}
 			}
 			catch (Exception Ex) {
-				System.Diagnostics.Debug.WriteLine(Ex.Message);
+				_logger.LogMessage("Error on Create Instance of " + fileName + " :" +Ex.Message, LogLevel.Warning);
 			}
 		}
 		
-		public bool msgCommand(ref IMessage msg, out String newMsg)
+		public bool msgCommand(IMessage msg, out string newMsg)
 		{
-			bool command = false;
+			bool modified = false;
 			newMsg = msg.Body;
 			try {
 				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
 				{
-					((PlugIn) pluginList[Ndx]).msgCommand(ref msg, ref newMsg, out command);
-					if (command)
+					if (((PlugIn) pluginList[Ndx]).msgCommand(ref msg, ref newMsg))
 					{
-						return true;
+						modified = true;
+						msg.Body =  newMsg;
 					}
-				}
-				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
-				{
-					((PlugIn) pluginList[Ndx]).msgCommand(ref msg, ref newMsg, out command);
-					msg.Body =  newMsg;
+					
 				}
 			} catch(Exception ex) {
-				_logger.LogMessage(ex.Message, LogLevel.Error);
+				_logger.LogMessage("Error on msgCommand: " + ex.Message, LogLevel.Error);
 			}
-			return false;
+			return modified;
 		}
 		
 		public void Stop() {

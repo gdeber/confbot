@@ -74,11 +74,10 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 
-		public override bool msgCommand(ref IMessage msg, ref string newMsg, out bool command)
+		public override bool msgCommand(ref IMessage msg, ref string newMsg)
 		{
-			command	= false;
+			bool modified = false;
 			newMsg = msg.Body;
-
 			if (Active) {
 				try {
 					string msgBody	= newMsg;
@@ -93,8 +92,9 @@ namespace ConfBot.PlugIns
 				catch(Exception ex) {
 					_logger.LogMessage(ex.Message, LogLevel.Error);
 				}
+				modified = true;
 			}
-			return true;
+			return modified;
 	
 		}
 	}

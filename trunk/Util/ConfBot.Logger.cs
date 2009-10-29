@@ -15,47 +15,102 @@ namespace ConfBot
 	/// </summary>
 	public class Logger : ILogger
 	{
-		private string _logFile;
+		private string _logLocation;
+		private bool _isFile = false;
+		private bool _isDir = false;
+		private string _errorFileName = "";
+		private string _warningFileName = "";
+		private string _infoFileName = "";
 		
-		public Logger(string logFile)
+		public Logger(string logLocation)
 		{
-			_logFile = logFile;
+			_logLocation = logLocation;
+			
+			if (_logLocation.Trim() != "" && _logLocation.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
+			{
+				_isDir = true;
+				try
+				{
+					System.IO.Directory.CreateDirectory(_logLocation);
+					_errorFileName = _logLocation + "error.log";
+					_warningFileName = _logLocation + "warning.log";
+					_infoFileName = _logLocation + "info.log";
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine("Error on create dir: " + e.Message);
+				}
+			}
+			
+			if (_logLocation.Trim() != "" && !_logLocation.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
+			{
+				_isFile = true;
+			}
 		}
 		
 		public void LogMessage(string message, ConfBot.Types.LogLevel level)
 		{
-			String header = "[" + DateTime.Now.ToString() + "]";
-			string levelStr = "";
-			switch (level) {
-				case ConfBot.Types.LogLevel.Error:
-					levelStr = "[EE]";
-					break;
-				case ConfBot.Types.LogLevel.Warning:
-					levelStr = "[WW]";
-					break;
-				case ConfBot.Types.LogLevel.Message:
-					levelStr = "[II]";
-					break;
-			}
-			
-			if (_logFile.Trim() != "")
+			try
 			{
-				try
+				String header = "[" + DateTime.Now.ToString() + "]";
+				string levelStr = "";
+						
+				switch (level) 
 				{
-					System.IO.StreamWriter sw = System.IO.File.AppendText(_logFile);
-					
-					sw.WriteLine(header + levelStr +": "+ message);
-					sw.Close();
+					case ConfBot.Types.LogLevel.Error:
+						levelStr = "[EE]";
+						break;
+					case ConfBot.Types.LogLevel.Warning:
+						levelStr = "[WW]";
+						break;
+					case ConfBot.Types.LogLevel.Message:
+						levelStr = "[II]";
+						break;
 				}
-				catch
+				
+				if (_logLocation.Trim() != "")
 				{
-					
+					if (_isFile)
+					{
+						System.IO.StreamWriter sw = System.IO.File.AppendText(_logLocation);
+						
+						sw.WriteLine(header + levelStr +": "+ message);
+						sw.Close();
+						
+					}
+					else
+					{
+						//è una directory!
+						
+						System.IO.StreamWriter sw = null;
+						
+						switch (level) 
+						{
+							case ConfBot.Types.LogLevel.Error:
+								sw = System.IO.File.AppendText(_errorFileName);
+								break;
+							case ConfBot.Types.LogLevel.Warning:
+								sw = System.IO.File.AppendText(_warningFileName);
+								break;
+							case ConfBot.Types.LogLevel.Message:
+								sw = System.IO.File.AppendText(_infoFileName);
+								break;
+						}
+							
+						sw.WriteLine(header +": "+ message);
+						sw.Close();
+						
+					}
+				}
+				else
+				{
+					//log to console
+					Console.WriteLine(header + levelStr +": "+ message);
 				}
 			}
-			else
+			catch (Exception e)
 			{
-				//log to console
-				Console.WriteLine(header + levelStr +": "+ message);
+				Console.WriteLine("Error On Logging! "+ e.Message);
 			}
 		}
 	}

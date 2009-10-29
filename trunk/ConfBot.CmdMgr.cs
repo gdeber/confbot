@@ -6,6 +6,7 @@
  * 
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
+using ConfBot.Types;
 using System;
 using System.Collections.Generic;
 using ConfBot;
@@ -66,10 +67,12 @@ namespace ConfBot
 
 		private Dictionary<string, botCommand> cmdDict = new Dictionary<string, botCommand>();
 		private IJabberClient _jabberClient;
+		private ILogger _logger;
 		
-		public CmdMgr(IJabberClient jabberClient)
+		public CmdMgr(IJabberClient jabberClient, ILogger logger)
 		{
 			_jabberClient = jabberClient;
+			_logger = logger;
 		}
 		
 		public void AddCommand(BotCmd command, Command refCmdClass) {
@@ -108,7 +111,12 @@ namespace ConfBot
 							return true;
 						}
 					}
-					cmd.CmdClass.ExecCommand(user, cmd.Code, lsParam);
+					try {
+						cmd.CmdClass.ExecCommand(user, cmd.Code, lsParam);	
+					} catch (Exception excp) {
+						_logger.LogMessage("Error on command: " + cmd.Code.ToString() + " : "+excp.Message, LogLevel.Error);
+					}
+					
 				} else {
 					_jabberClient.SendMessage(user, "Unknown Command");
 				}

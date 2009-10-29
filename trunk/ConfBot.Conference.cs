@@ -5,18 +5,19 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
-using ConfBot.Types;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Threading;
+
 using ConfBot.PlugIns;
+using ConfBot.Types;
 
 namespace ConfBot
 {
-		
 	
 	/// <summary>
 	/// Description of Conference.
@@ -25,16 +26,19 @@ namespace ConfBot
 	public sealed class Conference : ConfBot.Command
 	{
 		// we will wait on this event until we're done sending
-		public ManualResetEvent done = new ManualResetEvent(false);
+		private ManualResetEvent done = new ManualResetEvent(false);
 		private IJabberClient _jabbberClient;
 		private ILogger _logger;
 		private IConfigManager confConf;
 		
 		public static string botName = "ConfBot";
+		 
 		private string logFile;
 		public const string NOADMINMSG = "Non sei admin...niente da fare!";
-		public const string PLUGINDIR = "PlugIns";
-		public string PluginDir;
+		private const string PLUGINDIR = "PlugIns";
+		private const int FLOODING_SLEEP_TIME=3000;
+		private const int USERS_PER_SENDING_BLOCK = 3;
+		private string PluginDir;
 		
 		static string BotVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 		static CmdMgr				cmdMgr;
@@ -141,7 +145,7 @@ namespace ConfBot
 			{
 				botName	=confConf.GetSetting("BotName");
 			}
-				
+			
 			//log File
 			logFile = confConf.GetSetting("LogFile");
 			// what user/pass to log in as
@@ -155,10 +159,10 @@ namespace ConfBot
 			}
 
 			//command manager
-			cmdMgr	= new CmdMgr(_jabbberClient);
+			cmdMgr	= new CmdMgr(_jabbberClient, _logger);
 			cmdMgr.AddCommands(this);
 			//plugin manager
-			plugMgr = new PlugInMgr(_logger, this, PluginDir);
+			plugMgr = new PlugInMgr(_jabbberClient, confConf, _logger, PluginDir);
 			foreach(PlugIn pi in plugMgr.PlugInsList) {
 				cmdMgr.AddCommands(pi);
 			}
@@ -205,10 +209,7 @@ namespace ConfBot
 											break;
 				case Commands.Msg		:	
 											if (Param != "") {
-												foreach (IRosterItem rosterItem in _jabbberClient.Roster)
-												{
-													_jabbberClient.SendMessage(rosterItem, "*" + botName + ":* " + Param);
-												}
+												this.sendToAll("*" + botName + ":* " + Param);
 											}
 											break;
 				case Commands.Who		:	
@@ -246,10 +247,7 @@ namespace ConfBot
 				case Commands.Time		:	
 											DateTime Date = DateTime.Now;
 											String timeString = Date.ToString("HH:mm:ss");
-											foreach (IRosterItem rosterItem in _jabbberClient.Roster)
-											{
-												_jabbberClient.SendMessage(rosterItem, "Qui da _" + botName + "_ sono le " + timeString);
-											}
+											this.sendToAll("Qui da _" + botName + "_ sono le " + timeString);
 											break;
 				case Commands.Ver		:	
 											_jabbberClient.SendMessage(user, "*ConfBot:* ver. *" + BotVer + "*");
@@ -284,11 +282,21 @@ namespace ConfBot
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
 												} else {
-													if (paBanned.IndexOf(userObj.JID.User) >= 0) {
-														_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già bannato");
-													} else {
-														paBanned.Add(userObj.JID.User);
-														_jabbberClient.SendMessage(user, "*" + lsNick + "* bannato con successo");
+													if (userObj.IsAdmin)
+													{
+														_jabbberClient.SendMessage(user, "Ehi! questo bot non è una monarchia, non bannare un admin!");
+													}
+													else
+													{
+														if (paBanned.IndexOf(userObj.JID.User) >= 0) 
+														{
+															_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già bannato");
+														} 
+														else
+														{
+															paBanned.Add(userObj.JID.User);
+															_jabbberClient.SendMessage(user, "*" + lsNick + "* bannato con successo");
+														}
 													}
 												}
 											}
@@ -317,11 +325,18 @@ namespace ConfBot
 												if (userObj == null) {
 													_jabbberClient.SendMessage(user, "L'utente *" + Param + "* non esiste");
 												} else {
-													if (paNoReply.IndexOf(userObj.JID.User) >= 0) {
-														_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già in modalità ReadOnly");
-													} else {
-														paNoReply.Add(userObj.JID.User);
-														_jabbberClient.SendMessage(user, "*" + lsNick + "* è ora in modallità ReadOnly");
+													if (userObj.IsAdmin)
+													{
+														_jabbberClient.SendMessage(user, "Ehi! questo bot non è una monarchia, non zittire un admin!");
+													}
+													else
+													{
+														if (paNoReply.IndexOf(userObj.JID.User) >= 0) {
+															_jabbberClient.SendMessage(user, "*" + lsNick + "* risulta già in modalità ReadOnly");
+														} else {
+															paNoReply.Add(userObj.JID.User);
+															_jabbberClient.SendMessage(user, "*" + lsNick + "* è ora in modallità ReadOnly");
+														}
 													}
 												}
 											}
@@ -411,10 +426,30 @@ namespace ConfBot
 		{
 			IMessage message = (stateInfo as IMessage);
 			
+			
+			
 			if (message.Type == MessageType.error|| message.Body == null)
 			{
+				IRosterItem utenteSorgente = _jabbberClient.Roster[message.From.Bare];
+				
+				if (utenteSorgente == null)
+				{
+					//e chi minchia è?
+				}
+				else
+				{
+				
+					if ( (message.Error.Code == ErrorCode.ServiceUnavailable) &&
+					    (utenteSorgente.status == UserStatus.OnLine) )
+				    	{
+				    		//l'utente è online ma mi risponde che è irraggiungibile?!?
+				    		_logger.LogMessage(String.Format("L'utente {0} risulta irraggiungibile ma è ONLINE!!", message.From.Bare), LogLevel.Warning);
+				    	}
+				    
+				}	
+				
 				_logger.LogMessage(String.Format("Message error. Body: {0} From:{1}", 
-				                                 message.Body == null? "null": message.Body.ToString(), message.From.Bare)  , LogLevel.Warning);
+				               message.Body == null? "null": message.Body.ToString(), message.From.Bare)  , LogLevel.Warning);
 			}
 			else
 			{
@@ -424,36 +459,81 @@ namespace ConfBot
 					_jabbberClient.SendMessage(message.From, "Sorry, you are unable to send messages.");
 				} else {
 					if (!cmdMgr.ExecCommand(message.From, message.Body)) {
-						string msgBody	= message.Body;
-						foreach (IRosterItem rosterItem in _jabbberClient.Roster)
+						string msgBody;
+						if (!plugMgr.msgCommand(message, out msgBody))
 						{
-							//se non sono quello che l'ha mandato
-							if (!rosterItem.JID.Bare.Equals(message.From.Bare))
-							{
-								// se l'utente non è bannato
-								if (paBanned.IndexOf(rosterItem.JID.User) < 0) {
-								
-									//ottengo il roster item che è più informativo
-									//jabber.protocol.iq.Item rosterItem = rm[user];
-									//tipo il nickname
-									
-									String FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
-									if (FromUserName == null)
-									{
-										//se non c'è il nickname uso il nome utente
-										FromUserName = rosterItem.JID.User;
-									}
-									
-									//Andrew dice di mandare lo stesso...
-									_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
-								}
-							}
+							msgBody	= message.Body;
+						}
+						
+						string FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
+						
+						if (FromUserName == null)
+						{
+							//se non c'è il nickname uso il nome utente
+							FromUserName = _jabbberClient.Roster[message.From.Bare].JID.User;
+						}
+						
+						sendToAll("*" + FromUserName + ":* " + msgBody, _jabbberClient.Roster[message.From.Bare]);
+						
+//						foreach (IRosterItem rosterItem in _jabbberClient.Roster)
+//						{
+//							//se non sono quello che l'ha mandato
+//							if (!rosterItem.JID.Bare.Equals(message.From.Bare))
+//							{
+//								// se l'utente non è bannato
+//								if (paBanned.IndexOf(rosterItem.JID.User) < 0) {
+//									
+//									//Andrew dice di mandare lo stesso...
+//									_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
+//									//evitiamo di farci bloccare come spam
+//									Thread.Sleep(FLOODING_SLEEP_TIME);
+//								}
+//							}
+//						}
+					}
+				}
+			}
+		}
+		
+		#endregion
+		
+		#region PRIVATE METHODS
+		private void sendToAll(string msg, IRosterItem exceptUser)
+		{
+			ArrayList items = new ArrayList();
+			Random rnd = new Random(DateTime.Now.Millisecond);
+			int blockCounter = 0;
+			
+			//creo una lista riempita in ordine casuale
+			foreach (IRosterItem rosterItem in _jabbberClient.Roster)
+			{
+				items.Insert(rnd.Next(0,(items.Count+1)), rosterItem);
+			}
+			
+			foreach (IRosterItem rosterItem in items)
+			{
+				//viva le mappe di karnaugh!
+				if ((exceptUser == null) ||
+				    (!rosterItem.Equals(exceptUser)))
+				{
+					if (paBanned.IndexOf(rosterItem.JID.User) < 0)
+					{
+						_jabbberClient.SendMessage(rosterItem, msg);
+						blockCounter++;
+						if (blockCounter >= USERS_PER_SENDING_BLOCK)
+						{
+							Thread.Sleep(FLOODING_SLEEP_TIME);
+							blockCounter = 0;
 						}
 					}
 				}
 			}
 		}
 		
+		private void sendToAll(string msg)
+		{
+			this.sendToAll(msg, null);
+		}
 		#endregion
 	}
 }

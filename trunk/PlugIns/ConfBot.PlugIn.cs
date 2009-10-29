@@ -29,9 +29,14 @@ namespace ConfBot.PlugIns
 			this._configManager = configManager;
 		}
 		
-		public virtual bool msgCommand(ref IMessage msg, ref String newMsg, out bool command) {
-			command = false;
-			return true;
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="msg"></param>
+		/// <param name="newMsg"></param>
+		/// <returns>true if modified</returns>
+		public virtual bool msgCommand(ref IMessage msg, ref String newMsg) {
+			return false;
 		}
 		
 		#region ThreadSection
