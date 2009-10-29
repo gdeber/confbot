@@ -153,18 +153,25 @@ namespace ConfBot.PlugIns
 													destMsg	= Param.ToUpper();
 													
 													IRosterItem userItem = _jabberClient.Roster[destMsg];
-													switch (userItem.status) {
-															case UserStatus.Unknown		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
-																							break;
-															case UserStatus.Away		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is away.");
-																							break;
-															case UserStatus.NotAvailable	:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is offline.");
-																							break;
-															default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
-																							String insult	= insultDict[rnd.Next(insultDict.Count)];
-																							_jabberClient.SendMessage(userItem.JID, "_" + insult + "_");
-																							_jabberClient.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
-																							break;
+													if (userItem != null)
+													{
+														switch (userItem.status) {
+																case UserStatus.Unknown		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
+																								break;
+																case UserStatus.Away		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is away.");
+																								break;
+																case UserStatus.NotAvailable	:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is offline.");
+																								break;
+																default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
+																								String insult	= insultDict[rnd.Next(insultDict.Count)];
+																								_jabberClient.SendMessage(userItem.JID, "_" + insult + "_");
+																								_jabberClient.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
+																								break;
+														}
+													}
+													else
+													{
+														_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
 													}
 												}
 												break;
@@ -223,11 +230,10 @@ namespace ConfBot.PlugIns
 			return false;
 		}
 		
-		public override bool msgCommand(ref IMessage msg, ref String newMsg, out bool command) {
-			command	= false;
-			newMsg = msg.Body;
-//			
+		public override bool msgCommand(ref IMessage msg, ref String newMsg) {
 			
+			bool modified = false;
+			newMsg = msg.Body;
 			if (cleanMode) {
 				try {
 					string msgBody	= newMsg;
@@ -236,6 +242,8 @@ namespace ConfBot.PlugIns
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
 							_jabberClient.SendMessage(msg.From, msgBody);
+							modified = true;
+							
 						}
 					}
 				}
@@ -243,7 +251,7 @@ namespace ConfBot.PlugIns
 					_logger.LogMessage(ex.Message, LogLevel.Error);
 				}
 			}
-			return true;
+			return modified;
 		}
 	
 		private void SendAutoInsult(object stateInfo) {

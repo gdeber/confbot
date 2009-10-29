@@ -13,12 +13,16 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 
-using bedrock;
+using agsXMPP;
+using agsXMPP.protocol.client;
 using ConfBot.Types;
-using jabber.client;
+using agsXMPP.protocol.iq.roster;
+
+/*using jabber.client;
 using jabber.connection;
 using jabber.protocol.client;
 using jabber.protocol.iq;
+*/
 
 namespace ConfBot
 {
@@ -27,9 +31,8 @@ namespace ConfBot
 	/// </summary>
 	public class JabberClient : IJabberClient
 	{
-		private jabber.client.JabberClient _jabberClient= new jabber.client.JabberClient();
-		private jabber.client.RosterManager _rosterManager = new jabber.client.RosterManager();
-		private jabber.client.PresenceManager _presenceManager = new jabber.client.PresenceManager();
+		private XmppClientConnection _xmppConn = new XmppClientConnection();
+		
 		private ILogger _logger;
 		private IConfigManager _configMgr;
 		private string _statusMessage = "";
@@ -46,15 +49,17 @@ namespace ConfBot
 			//administrators
 			admins = _configMgr.GetSetting("Administrators").Split(',');
 			
-			_jabberClient.OnError += new ExceptionHandler(_jabberClient_OnError);
-			_jabberClient.OnAuthenticate += new ObjectHandler(_jabberClient_OnAuthenticate);
-			_jabberClient.OnMessage	+= new jabber.client.MessageHandler(_jabberClient_OnMessage);
-			_jabberClient.OnReadText += new TextHandler(_jabberClient_OnReadText);
-			_jabberClient.OnWriteText += new TextHandler(_jabberClient_OnWriteText);
-			_jabberClient.OnInvalidCertificate += new RemoteCertificateValidationCallback(_jabberClient_OnInvalidCertificate);
-			_jabberClient.OnPresence	+= new PresenceHandler(_jabberClient_OnPresence);
-			_rosterManager.OnRosterItem += new RosterItemHandler(_rosterManager_OnRosterItem);
-			_rosterManager.OnRosterEnd += new ObjectHandler(_rosterManager_OnRosterEnd);
+			_xmppConn.OnError += new ErrorHandler(_xmppConn_OnError);
+			_xmppConn.OnLogin += new ObjectHandler(_xmppConn_OnLogin);
+			_xmppConn.OnMessage += new agsXMPP.protocol.client.MessageHandler(_xmppConn_OnMessage);
+			_xmppConn.ClientSocket.OnValidateCertificate += new RemoteCertificateValidationCallback(_xmppConn_ClientSocket_OnValidateCertificate);			
+			_xmppConn.OnPresence += new PresenceHandler(_xmppConn_OnPresence);
+			_xmppConn.OnRosterItem += new XmppClientConnection.RosterHandler(_xmppConn_OnRosterItem);
+			_xmppConn.OnRosterEnd += new ObjectHandler(_xmppConn_OnRosterEnd);
+			
+			//for debug purpose
+			_xmppConn.OnReadXml += new XmlHandler(_xmppConn_OnReadXml);
+			_xmppConn.OnWriteXml += new XmlHandler(_xmppConn_OnWriteXml);
 			
 			this.InitConnection();
 			
@@ -82,27 +87,27 @@ namespace ConfBot
 		
 		public void SendMessage(IRosterItem rosterItem, string message)
 		{
-			_jabberClient.Message(rosterItem.JID.Bare, message);
+			_xmppConn.Send(new Message(new Jid(rosterItem.JID.Bare), agsXMPP.protocol.client.MessageType.chat, message));
 		}
 		
 		public void SendMessage(IJID user, string message)
 		{
-			_jabberClient.Message(user.Bare, message);
+			_xmppConn.Send(new Message(new Jid(user.Bare), agsXMPP.protocol.client.MessageType.chat, message));
 		}
 		
 		public void SendMessage(string bare, string message)
 		{
-			_jabberClient.Message(bare, message);
+			_xmppConn.Send(new Message(new Jid(bare), agsXMPP.protocol.client.MessageType.chat, message));
 		}
 		
 		public void Connect()
 		{
-			_jabberClient.Connect();
+			_xmppConn.Open();
 		}
 		
 		public void Close()
 		{
-			_jabberClient.Close();
+			_xmppConn.Close();
 		}
 		
 		#endregion
@@ -110,54 +115,54 @@ namespace ConfBot
 		#region PRIVATE METHOD
 		private void InitConnection()
 		{
-			_jabberClient.User = _configMgr.GetSetting("Username");
-			_jabberClient.Server = _configMgr.GetSetting("Server"); // use gmail.com for GoogleTalk
-			_jabberClient.Password = _configMgr.GetSetting("Password");
-			_jabberClient.NetworkHost = _configMgr.GetSetting("NetworkHost");
-			_jabberClient.Port = Int32.Parse(_configMgr.GetSetting("Port"));
-			//auth settings
+			_xmppConn.Username = _configMgr.GetSetting("Username");
+			_xmppConn.Server = _configMgr.GetSetting("Server"); // use gmail.com for GoogleTalk
+			_xmppConn.Password = _configMgr.GetSetting("Password");
+			_xmppConn.ConnectServer = _configMgr.GetSetting("NetworkHost");
+			_xmppConn.Port = Int32.Parse(_configMgr.GetSetting("Port"));
+			_xmppConn.Resource = _configMgr.GetSetting("Resource");
 			
-			_jabberClient.AutoStartTLS = true;
-			_jabberClient.KeepAlive = 5;
-			_jabberClient.Resource = _configMgr.GetSetting("Resource");
-			//j.Priority = 24;
-			
-			//Proxy settings
-			if (_configMgr.GetSetting("ProxyHost").Trim() == "")
-				_jabberClient.Proxy	= ProxyType.None;
-			else
+			if (_configMgr.GetSetting("StatusMessage").Trim() != "")
 			{
-				string proxyType;
-				if ( (proxyType = _configMgr.GetSetting("ProxyType").Trim()) == "")
-				{
-					_jabberClient.Proxy	= ProxyType.Socks5;
-				}
-				else
-				{
-					if (proxyType.Equals("Socks5", StringComparison.InvariantCultureIgnoreCase))
-					{
-						_jabberClient.Proxy = ProxyType.Socks5;
-					}
-					if (proxyType.Equals("Socks4", StringComparison.InvariantCultureIgnoreCase))
-					{
-						_jabberClient.Proxy = ProxyType.Socks4;
-					}
-					if (proxyType.Equals("HTTP", StringComparison.InvariantCultureIgnoreCase))
-					{
-						_jabberClient.Proxy = ProxyType.HTTP;
-					}
-				}
-				_jabberClient.ProxyHost = _configMgr.GetSetting("ProxyHost");
-				_jabberClient.ProxyPort = Int32.Parse(_configMgr.GetSetting("ProxyPort"));
+				_statusMessage =_configMgr.GetSetting("StatusMessage");
 			}
 			
-			// don't do extra stuff, please.
-			_jabberClient.AutoPresence = false;
-			_jabberClient.AutoRoster = true;
-			_jabberClient.AutoReconnect = 0;
+//			//Proxy settings
+//			if (_configMgr.GetSetting("ProxyHost").Trim() == "")
+//				_xmppCon
+//				_jabberClient.Proxy	= ProxyType.None;
+//			else
+//			{
+//				string proxyType;
+//				if ( (proxyType = _configMgr.GetSetting("ProxyType").Trim()) == "")
+//				{
+//					_jabberClient.Proxy	= ProxyType.Socks5;
+//				}
+//				else
+//				{
+//					if (proxyType.Equals("Socks5", StringComparison.InvariantCultureIgnoreCase))
+//					{
+//						_jabberClient.Proxy = ProxyType.Socks5;
+//					}
+//					if (proxyType.Equals("Socks4", StringComparison.InvariantCultureIgnoreCase))
+//					{
+//						_jabberClient.Proxy = ProxyType.Socks4;
+//					}
+//					if (proxyType.Equals("HTTP", StringComparison.InvariantCultureIgnoreCase))
+//					{
+//						_jabberClient.Proxy = ProxyType.HTTP;
+//					}
+//				}
+//				_jabberClient.ProxyHost = _configMgr.GetSetting("ProxyHost");
+//				_jabberClient.ProxyPort = Int32.Parse(_configMgr.GetSetting("ProxyPort"));
+//			}
 			
-			_rosterManager.Stream = _jabberClient;
-			_presenceManager.Stream = _jabberClient;
+			// don't do extra stuff, please.
+			_xmppConn.AutoPresence = false;
+			_xmppConn.AutoRoster = true;
+			_xmppConn.UseSSL = true;
+			_xmppConn.AutoResolveConnectServer = false;
+			_xmppConn.KeepAlive = true;
 		}
 		
 		private bool isAdmin(string user)
@@ -175,26 +180,26 @@ namespace ConfBot
 		#endregion
 		
 		#region EVENT HANDLER
-		bool _jabberClient_OnInvalidCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+		bool _xmppConn_ClientSocket_OnValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
 		{
 			return true;
 		}
-
-		void _jabberClient_OnWriteText(object sender, string txt)
+		
+		void _xmppConn_OnWriteXml(object sender, string xml)
 		{
-			if (txt == " ") return;  // ignore keep-alive spaces
+			if (xml == " ") return;  // ignore keep-alive spaces
 			//Console.WriteLine("SEND: " + txt);
-			_logger.LogMessage("SEND: " + txt, LogLevel.Message);
+			_logger.LogMessage("SEND: " + xml, LogLevel.Message);
 		}
 
-		void _jabberClient_OnReadText(object sender, string txt)
+		void _xmppConn_OnReadXml(object sender, string xml)
 		{
-			if (txt == " ") return;  // ignore keep-alive spaces
+			if (xml == " ") return;  // ignore keep-alive spaces
 			//Console.WriteLine("RECV: " + txt);
-			_logger.LogMessage("RECV: " + txt, LogLevel.Message);
+			_logger.LogMessage("RECV: " + xml, LogLevel.Message);
 		}
-
-		void _jabberClient_OnMessage(object sender, jabber.protocol.client.Message msg)
+		
+		void _xmppConn_OnMessage(object sender, Message msg)
 		{
 			if (this.OnMessage != null)
 			{
@@ -202,12 +207,12 @@ namespace ConfBot
 			}
 		}
 
-		void _jabberClient_OnAuthenticate(object sender)
+		void _xmppConn_OnLogin(object sender)
 		{
 			_logger.LogMessage("Authenticated!" , LogLevel.Message);
 		}
 
-		void _jabberClient_OnError(object sender, Exception ex)
+		void _xmppConn_OnError(object sender, Exception ex)
 		{
 			if (this.OnError != null)
 			{
@@ -215,64 +220,68 @@ namespace ConfBot
 			}
 		}
 		
-		void _jabberClient_OnPresence(object sender, Presence pres)
+		void _xmppConn_OnPresence(object sender, Presence pres)
 		{
 			try {
 				_logger.LogMessage("Presence from: " + pres.From.Bare, LogLevel.Message);
-				if (pres.From.Bare != this._jabberClient.JID.Bare)
+				//sono io?
+				if (pres.From.Bare != this._xmppConn.MyJID.Bare.ToLowerInvariant())
 				{
-					if (friendList[pres.From.Bare] != null)
+					if (friendList[pres.From.Bare.ToLowerInvariant()] != null)
 					{
-						friendList[pres.From.Bare].pres = pres;
+						friendList[pres.From.Bare.ToLowerInvariant()].pres = pres;
 					}
 				}
 			} catch (Exception ex) {
-				_logger.LogMessage("error on presence" + ex.Message, LogLevel.Error);
+				_logger.LogMessage("error on presence: " + ex.Message, LogLevel.Error);
 			}
-			
 		}
 		
-		void _rosterManager_OnRosterItem(object sender, Item ri)
+		void _xmppConn_OnRosterItem(object sender, RosterItem item)
 		{
 			try {
-				_logger.LogMessage("Roster Item: " + ri.JID.Bare + " Subscription: " + ri.Subscription.ToString() , LogLevel.Message);
-				if (ri.Subscription == Subscription.remove)
+				_logger.LogMessage("Roster Item: " + item.Jid.Bare + " Subscription: " + item.Subscription.ToString() , LogLevel.Message);
+				if (item.Subscription == SubscriptionType.remove)
 				{
-					friendList.Remove(ri.JID.Bare);
+					friendList.Remove(item.Jid.Bare.ToLowerInvariant());
 				}
 				else
 				{
-					RosterItemWrapper friend = new RosterItemWrapper(ri);
-					friend.IsAdmin = this.isAdmin(friend.JID.Bare);
-					friendList.Add(ri.JID.Bare, friend);
+					if (!friendList.ContainsKey(item.Jid.Bare.ToLowerInvariant()))
+					{
+						RosterItemWrapper friend = new RosterItemWrapper(item);
+						friend.IsAdmin = this.isAdmin(friend.JID.Bare.ToLowerInvariant());
+						friendList.Add(item.Jid.Bare.ToLowerInvariant(), friend);
+					}
 				}
-			} catch (Exception ex) {
-				_logger.LogMessage("error on Roster Item" + ex.Message, LogLevel.Error);
+			} catch (Exception ex) {				
+				_logger.LogMessage(String.Format("error on Roster Item {0}: {1} ", item.Jid.Bare, ex.Message), LogLevel.Error);
 			}
-			
 		}
 		
-		void _rosterManager_OnRosterEnd(object sender)
+		void _xmppConn_OnRosterEnd(object sender)
 		{
 			//now send presence
 			_logger.LogMessage("Send Presence..." , LogLevel.Message);
-			_jabberClient.Presence(PresenceType.available, _statusMessage, "available", 0);
+			_xmppConn.Status = _statusMessage;
+			_xmppConn.Show = ShowType.NONE;
+			_xmppConn.SendMyPresence();
 		}
 		
 		#endregion
 		
 		public IJID JID {
 			get {
-				return (IJID)_jabberClient.JID;
+				return (IJID)_xmppConn.MyJID;
 			}
 		}
 		
 		public string Nickname {
 			get {
-				return _jabberClient.User;
+				return _xmppConn.Username;
 			}
 			set {
-				_jabberClient.User = value;
+				_xmppConn.Username = value;
 			}
 		}
 		
@@ -281,27 +290,28 @@ namespace ConfBot
 				return _statusMessage;
 			}
 			set {
-				_jabberClient.Presence(jabber.protocol.client.PresenceType.available, value, "available", 0);
 				_statusMessage = value;
+				_xmppConn.Status = _statusMessage;
+				_xmppConn.SendMyPresence();				
 			}
 		}
 	}
 	
 	internal class JabberMessage : IMessage
 	{
-		private jabber.protocol.client.Message _message;
+		private Message _message;
 		
-		public JabberMessage(jabber.protocol.client.Message message)
+		public JabberMessage(Message message)
 		{
 			_message = message;
 		}
 		
 		public IJID From {
 			get {
-				return new JIDWrapper(_message.From.Bare);
+				return new JIDWrapper(_message.From);
 			}
 			set {
-				_message.From = new jabber.JID(value.Bare);
+				_message.From = new Jid(value.Bare);
 			}
 		}
 		
@@ -310,16 +320,16 @@ namespace ConfBot
 				return new JIDWrapper(_message.To);
 			}
 			set {
-				_message.To = new jabber.JID(value.Bare);
+				_message.To = new Jid(value.Bare);
 			}
 		}
 		
 		public ConfBot.Types.MessageType Type {
 			get {
 				switch (_message.Type) {
-					case jabber.protocol.client.MessageType.error:
+					case agsXMPP.protocol.client.MessageType.error:
 						return ConfBot.Types.MessageType.error;
-					case jabber.protocol.client.MessageType.chat:
+					case agsXMPP.protocol.client.MessageType.chat:
 						return ConfBot.Types.MessageType.chat;
 					default:
 						return ConfBot.Types.MessageType.chat;
@@ -328,10 +338,10 @@ namespace ConfBot
 			set {
 				switch (value) {
 					case ConfBot.Types.MessageType.error:
-						_message.Type = jabber.protocol.client.MessageType.error;
+						_message.Type = agsXMPP.protocol.client.MessageType.error;
 						break;
 					case ConfBot.Types.MessageType.chat:
-						_message.Type = jabber.protocol.client.MessageType.chat;
+						_message.Type = agsXMPP.protocol.client.MessageType.chat;
 						break;
 				}
 			}
@@ -345,20 +355,42 @@ namespace ConfBot
 				_message.Body = value;
 			}
 		}
+		
+		IError IMessage.Error {
+			get {
+				return new ErrorWrapper(_message.Error);
+			}
+		}
+	}
+	
+	internal class ErrorWrapper : IError
+	{
+		private agsXMPP.protocol.client.Error _error;
+		
+		public ErrorWrapper (agsXMPP.protocol.client.Error error)
+		{
+			_error = error;
+		}
+		
+		ConfBot.Types.ErrorCode IError.Code {
+			get {
+				return (ConfBot.Types.ErrorCode)_error.Code;
+			}
+		}
 	}
 	
 	internal class JIDWrapper :  IJID
 	{
-		private jabber.JID _jid;
+		private agsXMPP.Jid _jid;
 		
-		public JIDWrapper(jabber.JID jid)
+		public JIDWrapper(agsXMPP.Jid jid)
 		{
 			_jid = jid;
 		}
 		
 		public string Bare {
 			get {
-				return _jid;
+				return _jid.Bare;
 			}
 		}
 		
@@ -393,29 +425,29 @@ namespace ConfBot
 	internal class RosterItemWrapper : IRosterItem
 	{
 		
-		private jabber.protocol.iq.Item _item;
-		private jabber.protocol.client.Presence _presence = null;
+		private agsXMPP.protocol.iq.roster.RosterItem _item;
+		private agsXMPP.protocol.client.Presence _presence = null;
 		private bool _isAdmin = false;
 		
-		public RosterItemWrapper(jabber.protocol.iq.Item rosterItem)
+		public RosterItemWrapper(agsXMPP.protocol.iq.roster.RosterItem rosterItem)
 		{
 			_item = rosterItem;
 		}
 		
 		public IJID JID {
 			get {
-				return new JIDWrapper(_item.JID);
+				return new JIDWrapper(_item.Jid);
 			}
 		}
 		
-		public Item item
+		public agsXMPP.protocol.iq.roster.RosterItem item
 		{
 			get{
 				return _item;
 			}
 		}
 		
-		public Presence pres {
+		public agsXMPP.protocol.client.Presence pres {
 			get{
 				return _presence;
 			}
@@ -434,14 +466,14 @@ namespace ConfBot
 				else
 				{
 					switch (_presence.Show) {
-						case "dnd":
+						case ShowType.dnd:
 							return UserStatus.DoNotDisturb;
 							
-						case "away" :
-						case "xa" :
+						case ShowType.away :
+						case ShowType.xa :
 							return UserStatus.Away;
 							
-						case "chat":
+						case ShowType.chat:
 						default:
 							return UserStatus.OnLine;
 					}
@@ -460,10 +492,10 @@ namespace ConfBot
 		
 		public string Nickname {
 			get {
-				return _item.Nickname;
+				return _item.Name;
 			}
 			set {
-				_item.Nickname = value;
+				_item.Name = value;
 			}
 		}
 	}
@@ -481,20 +513,20 @@ namespace ConfBot
 				}
 				else
 				{
-					throw new ArgumentOutOfRangeException();
+					return null;
 				}
 			}
-			set {
-				IRosterItem item = this.findItem(user);
-				if (item != null)
-				{
-					item = value;
-				}
-				else
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-			}
+//			set {
+//				IRosterItem item = this.findItem(user);
+//				if (item != null)
+//				{
+//					item = value;
+//				}
+//				else
+//				{
+//					throw new ArgumentOutOfRangeException();
+//				}
+//			}
 		}
 		
 		private IRosterItem findItem(string user)

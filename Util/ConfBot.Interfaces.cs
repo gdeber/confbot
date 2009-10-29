@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using ConfBot.Types;
-using jabber.client;
 
 namespace ConfBot
 {
@@ -94,7 +93,7 @@ namespace ConfBot
 		IRosterItem this[string user]
 		{
 			get;
-			set;
+//			set;
 		}
 	}
 	
@@ -140,10 +139,25 @@ namespace ConfBot
 			set;
 		}
 		
+		IError Error
+		{
+			get;
+		}
+		
+		
 		string Body
 		{
 			get;
 			set;
 		}
+	}
+	
+	public interface IError
+	{
+		ErrorCode Code
+		{
+			get;
+		}
+		
 	}
 }

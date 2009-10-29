@@ -99,10 +99,9 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 	
-		public override bool msgCommand(ref IMessage msg, ref String newMsg, out bool command)
+		public override bool msgCommand(ref IMessage msg, ref String newMsg)
 		{
-			command	= false;
-			return true;
+			return false;
 		}
 		
 
