@@ -83,14 +83,14 @@ namespace ConfBot.PlugIns
 			}
 		}
 		
-		public bool msgCommand(IMessage msg, out string newMsg)
+		public bool ElabMessage(IMessage msg, out string newMsg)
 		{
 			bool modified = false;
 			newMsg = msg.Body;
 			try {
 				for(int Ndx = 0; Ndx <= (pluginList.Count - 1); Ndx++)
 				{
-					if (((PlugIn) pluginList[Ndx]).msgCommand(ref msg, ref newMsg))
+					if (((PlugIn) pluginList[Ndx]).ElabMessage(ref msg, ref newMsg))
 					{
 						modified = true;
 						msg.Body =  newMsg;
