@@ -16,21 +16,53 @@ using ConfBot.PlugIns;
 
 namespace ConfBot.PlugIns
 {
+	struct ToBeABadBoy {
+		public IJID	Boy {
+			get;
+			set;
+		}
+		public DateTime	TimeFirst {
+			get;
+			set;
+		}
+		public int Count {
+			get;
+			set;
+		}
+	}
+
+	struct BadBoy {
+		public IJID	Boy {
+			get;
+			set;
+		}
+		public DateTime	TimeToSleep {
+			get;
+			set;
+		}
+	}
+
 	/// <summary>
 	/// Description of CleanMode.
 	/// </summary>
 	[PlugInAttribute]
 	public class CleanMode : PlugIn
 	{
+		private const int MaxBadWord			= 10;
+		private const int MaxBadTime			= 30;
+		private const int SleepBadBoyTime	= 15;
 
-		bool cleanMode = false;
-		bool autoInsultMode = true;
-		string[] badDict;
-		string[] goodDict;
+		private bool cleanMode			= false;
+		private bool autoInsultMode	= true;
+		private bool badBoysMode		= false;
+		private string[] badDict;
+		private string[] goodDict;
 		
-		List<char> charAlphaDict = new List<char>();
-		List<string> badWordDict = new List<string>();
-		List<string> insultDict = new List<string>();
+		private List<char>				charAlphaDict	= new List<char>();
+		private List<string>				badWordDict	= new List<string>();
+		private List<string>				insultDict		= new List<string>();
+		private List<ToBeABadBoy>	badBoysToBe	= new List<ToBeABadBoy>();
+		private List<BadBoy>			badBoys			= new List<BadBoy>();
 
 		Timer autoInsult;
 			
@@ -61,6 +93,12 @@ namespace ConfBot.PlugIns
 			tempCmd.Admin	= false;
 			tempCmd.Help	= "[nickname] invia un insulto anonimo all'utente";
 			listCmd.Add(tempCmd);
+			// BadBoys Command
+			tempCmd.Command	= "badboys";
+			tempCmd.Code	= Convert.ToInt32(Commands.BadBoys);
+			tempCmd.Admin	= false;
+			tempCmd.Help	= "[on|off|list] attiva/disattiva la modalità BadBoys - elenca i BadBoys";
+			listCmd.Add(tempCmd);
 			#endregion
 
 			char[] charAlpha = {'Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','ì','è','é','ò','à','ù'};
@@ -69,6 +107,8 @@ namespace ConfBot.PlugIns
 			cleanMode	= (this._configManager.GetSetting("CleanMode") == "on");
 			//autoinsult Mode
 			autoInsultMode	= (this._configManager.GetSetting("AutoInsultMode") == "on");
+			//badboys Mode
+			badBoysMode	= (this._configManager.GetSetting("BadBoysMode") == "on");
 			//bad Dictionary
 			badDict		= this._configManager.GetSetting("BadDictionary").Split(',');
 			for (int ndx = 0; ndx < badDict.Length; ndx++) {
@@ -90,7 +130,8 @@ namespace ConfBot.PlugIns
 			CleanMode	= 1,
 			AutoInsult	= 2,
 			AddInsult	= 3,
-			Insult		= 4		
+			Insult			= 4,
+			BadBoys	= 5
 		}
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
@@ -175,17 +216,49 @@ namespace ConfBot.PlugIns
 													}
 												}
 												break;
+				case Commands.BadBoys	:	
+												switch (Param) {
+													case "on" 	:	badBoysMode	= true;
+																	_jabberClient.SendMessage(user, "*BadBoys Activated*");
+																	//ora lo salvo
+																	_configManager.SetSetting("BadBoysMode", "on");
+																	break;
+													case "off"	:	badBoysMode	= false;
+																	_jabberClient.SendMessage(user, "*BadBoys Deactivated*");
+																	//ora lo salvo
+																	_configManager.SetSetting("BadBoysMode", "off");
+																	break;
+													case "list"	:	badBoysMode	= false;
+																	string list	= "";
+																	foreach(BadBoy badBoy in badBoys) {
+																		list += badBoy.Boy.Bare + '\n';
+																	}
+																	if (list=="") {
+																		_jabberClient.SendMessage(user, "There are no BadBoys in the conference");
+																	} else {
+																		_jabberClient.SendMessage(user, "The BadBoys in conference are: \n" + list);
+																	}
+																	break;
+													default		:	if (autoInsultMode) {
+																		_jabberClient.SendMessage(user, "_BadBoys is active_");
+																	} else {
+																		_jabberClient.SendMessage(user, "_BadBoys is not active_");
+																	}
+																	break;
+												}
+												break;
 			}
 			return true;
 		}
 		#endregion
 		
-		public bool CleanText(ref string messageText) {
+		public bool CleanText(ref string messageText, ref int badWords) {
 			try {
-				Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
-				int startPos = 0;
-				string tmpIn = messageText.ToUpper();
-				string tmpOut = "";
+				badWords			= 0;
+				Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
+				int		startPos	= 0;
+				string		tmpIn		= messageText.ToUpper();
+				string		tmpOut	= "";
 				while (true) {
 					while (startPos < tmpIn.Length) {
 						if (charAlphaDict.IndexOf(tmpIn[startPos]) < 0)
@@ -211,6 +284,7 @@ namespace ConfBot.PlugIns
 						if (endPos > startPos) {
 							if (badWordDict.IndexOf(tmpIn.Substring(startPos, endPos - startPos + 1)) >= 0) {
 								tmpOut	+= ("_" + goodDict[rnd.Next(goodDict.Length)] + "_");
+								badWords++;
 							} else {
 								tmpOut	+= messageText.Substring(startPos, endPos - startPos + 1);
 							}
@@ -230,20 +304,74 @@ namespace ConfBot.PlugIns
 			return false;
 		}
 		
-		public override bool msgCommand(ref IMessage msg, ref String newMsg) {
+		public override bool ElabMessage(ref IMessage msg, ref String newMsg) {
 			
 			bool modified = false;
 			newMsg = msg.Body;
 			if (cleanMode) {
 				try {
+					#region BadBoy?
+					if (badBoysMode) {
+						foreach(BadBoy item in badBoys) {
+							if (item.Boy == msg.From) {
+								if (item.TimeToSleep < System.DateTime.Now) {
+									int ndx = badBoys.IndexOf(item);
+									badBoys.RemoveAt(ndx);
+									break;
+								} else {
+									_jabberClient.SendMessage(msg.From, "Be Quiet !!!");
+									newMsg	= "";
+									return true;							
+								}
+							}
+						}
+					}
+					#endregion
 					string msgBody	= newMsg;
-					CleanText(ref msgBody);
+					int	badWords	= 0;
+					CleanText(ref msgBody, ref badWords);
+					#region BadBoy routine
+					if (badBoysMode && (badWords > 0)) {
+						bool	found = false;
+						for(int ndx = 0; ndx < badBoysToBe.Count; ndx++) {
+							ToBeABadBoy	item = badBoysToBe[ndx];
+							if (item.Boy == msg.From) {
+								badBoysToBe.RemoveAt(ndx);
+								if (item.TimeFirst < (System.DateTime.Now - (new TimeSpan(0, MaxBadTime, 0)))) {
+									item.TimeFirst	= System.DateTime.Now;
+									item.Count	= badWords;
+								} else {
+									item.Count	+= badWords;
+								}
+								badBoysToBe.Add(item);
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							ToBeABadBoy	item = new ToBeABadBoy();
+							item.Boy			= msg.From;
+							item.Count		= badWords;
+							item.TimeFirst	= System.DateTime.Now;
+							badBoysToBe.Add(item);
+						}
+						int ndxBad = (badBoysToBe.Count - 1);
+						if (badBoysToBe[ndxBad].Count > MaxBadWord) {
+							BadBoy	item		= new BadBoy();
+							item.Boy				= badBoysToBe[ndxBad].Boy;
+							item.TimeToSleep	= DateTime.Now + (new TimeSpan(0, SleepBadBoyTime, 0));
+							badBoys.Add(item);
+							badBoysToBe.RemoveAt(ndxBad);
+							_jabberClient.SendMessage(msg.From, string.Format("You are a *Bad Boy*, be quiet for {0} minutes..", SleepBadBoyTime));
+							msgBody	= "";
+						}
+					}
+					#endregion
 					if (msgBody.Trim() != "") {
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
 							_jabberClient.SendMessage(msg.From, msgBody);
-							modified = true;
-							
+							modified = true;							
 						}
 					}
 				}
