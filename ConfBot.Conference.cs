@@ -460,36 +460,38 @@ namespace ConfBot
 				} else {
 					if (!cmdMgr.ExecCommand(message.From, message.Body)) {
 						string msgBody;
-						if (!plugMgr.msgCommand(message, out msgBody))
+						if (!plugMgr.ElabMessage(message, out msgBody))
 						{
 							msgBody	= message.Body;
 						}
 						
-						string FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
-						
-						if (FromUserName == null)
-						{
-							//se non c'è il nickname uso il nome utente
-							FromUserName = _jabbberClient.Roster[message.From.Bare].JID.User;
+						if (msgBody.Trim() != "") {
+							string FromUserName = _jabbberClient.Roster[message.From.Bare].Nickname;
+							
+							if (FromUserName == null)
+							{
+								//se non c'è il nickname uso il nome utente
+								FromUserName = _jabbberClient.Roster[message.From.Bare].JID.User;
+							}
+							
+							sendToAll("*" + FromUserName + ":* " + msgBody, _jabbberClient.Roster[message.From.Bare]);
+							
+	//						foreach (IRosterItem rosterItem in _jabbberClient.Roster)
+	//						{
+	//							//se non sono quello che l'ha mandato
+	//							if (!rosterItem.JID.Bare.Equals(message.From.Bare))
+	//							{
+	//								// se l'utente non è bannato
+	//								if (paBanned.IndexOf(rosterItem.JID.User) < 0) {
+	//									
+	//									//Andrew dice di mandare lo stesso...
+	//									_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
+	//									//evitiamo di farci bloccare come spam
+	//									Thread.Sleep(FLOODING_SLEEP_TIME);
+	//								}
+	//							}
+	//						}
 						}
-						
-						sendToAll("*" + FromUserName + ":* " + msgBody, _jabbberClient.Roster[message.From.Bare]);
-						
-//						foreach (IRosterItem rosterItem in _jabbberClient.Roster)
-//						{
-//							//se non sono quello che l'ha mandato
-//							if (!rosterItem.JID.Bare.Equals(message.From.Bare))
-//							{
-//								// se l'utente non è bannato
-//								if (paBanned.IndexOf(rosterItem.JID.User) < 0) {
-//									
-//									//Andrew dice di mandare lo stesso...
-//									_jabbberClient.SendMessage(rosterItem.JID, "*" + FromUserName + ":* " + msgBody);
-//									//evitiamo di farci bloccare come spam
-//									Thread.Sleep(FLOODING_SLEEP_TIME);
-//								}
-//							}
-//						}
 					}
 				}
 			}
