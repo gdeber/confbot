@@ -74,7 +74,7 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 
-		public override bool msgCommand(ref IMessage msg, ref string newMsg)
+		public override bool ElabMessage(ref IMessage msg, ref string newMsg)
 		{
 			bool modified = false;
 			newMsg = msg.Body;

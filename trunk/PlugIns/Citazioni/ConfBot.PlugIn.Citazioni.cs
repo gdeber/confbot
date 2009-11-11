@@ -99,7 +99,7 @@ namespace ConfBot.PlugIns
 		}
 		#endregion
 	
-		public override bool msgCommand(ref IMessage msg, ref String newMsg)
+		public override bool ElabMessage(ref IMessage msg, ref String newMsg)
 		{
 			return false;
 		}

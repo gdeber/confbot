@@ -35,7 +35,7 @@ namespace ConfBot.PlugIns
 		/// <param name="msg"></param>
 		/// <param name="newMsg"></param>
 		/// <returns>true if modified</returns>
-		public virtual bool msgCommand(ref IMessage msg, ref String newMsg) {
+		public virtual bool ElabMessage(ref IMessage msg, ref String newMsg) {
 			return false;
 		}
 		
