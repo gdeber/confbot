@@ -227,9 +227,15 @@ namespace ConfBot
 				//sono io?
 				if (pres.From.Bare != this._xmppConn.MyJID.Bare.ToLowerInvariant())
 				{
-					if (friendList[pres.From.Bare.ToLowerInvariant()] != null)
+					string bareNameInv = pres.From.Bare.ToLowerInvariant();
+					if (friendList[bareNameInv] != null)
 					{
-						friendList[pres.From.Bare.ToLowerInvariant()].pres = pres;
+						//c'è l'utente
+						friendList[bareNameInv].UpdatePresence(pres);
+					}
+					else
+					{
+						_logger.LogMessage(String.Format("Presence from user not in roster...mah! {0}", pres.From.ToString()), LogLevel.Warning);
 					}
 				}
 			} catch (Exception ex) {
@@ -358,7 +364,14 @@ namespace ConfBot
 		
 		IError IMessage.Error {
 			get {
-				return new ErrorWrapper(_message.Error);
+				if (_message.Error != null)
+				{
+					return new ErrorWrapper(_message.Error);
+				}
+				else
+				{
+					return null;
+				}
 			}
 		}
 	}
@@ -426,7 +439,7 @@ namespace ConfBot
 	{
 		
 		private agsXMPP.protocol.iq.roster.RosterItem _item;
-		private agsXMPP.protocol.client.Presence _presence = null;
+		private List<agsXMPP.protocol.client.Presence> _presences = new List<agsXMPP.protocol.client.Presence>();
 		private bool _isAdmin = false;
 		
 		public RosterItemWrapper(agsXMPP.protocol.iq.roster.RosterItem rosterItem)
@@ -447,36 +460,31 @@ namespace ConfBot
 			}
 		}
 		
-		public agsXMPP.protocol.client.Presence pres {
-			get{
-				return _presence;
-			}
-			
-			set{
-				_presence = value;
-			}
-		}
+//		public List<agsXMPP.protocol.client.Presence> presences {
+//			get{
+//				return _presences;
+//			}
+//		}
 		
 		public UserStatus status {
 			get {
-				if (_presence == null || _presence.Type == PresenceType.unavailable)
+				if (_presences == null || this.PresencesSameType(PresenceType.unavailable) 
+				    || _presences.Count == 0)
 				{
 					return UserStatus.NotAvailable;
 				}
 				else
 				{
-					switch (_presence.Show) {
-						case ShowType.dnd:
-							return UserStatus.DoNotDisturb;
-							
-						case ShowType.away :
-						case ShowType.xa :
-							return UserStatus.Away;
-							
-						case ShowType.chat:
-						default:
-							return UserStatus.OnLine;
+					if (this.PresenceSameShow(ShowType.dnd))
+					{
+						return UserStatus.DoNotDisturb;
 					}
+					if (this.PresenceSameShow(ShowType.away) || this.PresenceSameShow(ShowType.xa))
+					{
+						return UserStatus.Away;
+					}
+					
+					return UserStatus.OnLine;
 				}
 			}
 		}
@@ -497,6 +505,69 @@ namespace ConfBot
 			set {
 				_item.Name = value;
 			}
+		}
+		
+		public void UpdatePresence(agsXMPP.protocol.client.Presence recvPres)
+		{
+			for (int presIdx = 0; presIdx<_presences.Count ; presIdx++ ) 
+			{
+				if (_presences[presIdx].From.Resource.Equals(recvPres.From.Resource))
+				{
+					//trovata presenza da aggiornare
+					if (recvPres.Type == PresenceType.unavailable)
+					{
+						_presences.Remove(_presences[presIdx]);
+						return;
+					}
+					else
+					{
+						_presences[presIdx] = recvPres;
+						return;
+					}
+				}
+			}
+			
+			//non ho trovato presenza
+			if (recvPres.Type != PresenceType.unavailable)
+			{
+				_presences.Add(recvPres);
+			}
+		}
+		
+		private bool PresencesSameType(PresenceType type)
+		{
+			if (_presences.Count == 0)
+			{
+				return false;
+			}
+			
+			foreach(Presence presItem in _presences)
+			{
+				if (presItem.Type != type)
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
+		
+		private bool PresenceSameShow(ShowType show)
+		{
+			if (_presences.Count == 0)
+			{
+				return false;
+			}
+			
+			foreach(Presence presItem in _presences)
+			{
+				if (presItem.Show != show)
+				{
+					return false;
+				}
+			}
+			
+			return true;
 		}
 	}
 	

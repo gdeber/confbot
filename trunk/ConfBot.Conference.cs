@@ -426,9 +426,12 @@ namespace ConfBot
 		{
 			IMessage message = (stateInfo as IMessage);
 			
+			if (message.Body == null)
+			{
+				return;
+			}
 			
-			
-			if (message.Type == MessageType.error|| message.Body == null)
+			if (message.Type == MessageType.error)
 			{
 				IRosterItem utenteSorgente = _jabbberClient.Roster[message.From.Bare];
 				
@@ -444,6 +447,7 @@ namespace ConfBot
 				    	{
 				    		//l'utente è online ma mi risponde che è irraggiungibile?!?
 				    		_logger.LogMessage(String.Format("L'utente {0} risulta irraggiungibile ma è ONLINE!!", message.From.Bare), LogLevel.Warning);
+				    		_jabbberClient.SendMessage(message.From, message.Body);
 				    	}
 				    
 				}	

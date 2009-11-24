@@ -17,7 +17,6 @@ namespace ConfBot
 	{
 		private string _logLocation;
 		private bool _isFile = false;
-		private bool _isDir = false;
 		private string _errorFileName = "";
 		private string _warningFileName = "";
 		private string _infoFileName = "";
@@ -28,7 +27,6 @@ namespace ConfBot
 			
 			if (_logLocation.Trim() != "" && _logLocation.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
 			{
-				_isDir = true;
 				try
 				{
 					System.IO.Directory.CreateDirectory(_logLocation);
@@ -110,7 +108,7 @@ namespace ConfBot
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Error On Logging! "+ e.Message);
+				Console.WriteLine("[" + DateTime.Now.ToString() + "]: " + ": Error On Logging! "+ e.Message);
 			}
 		}
 	}

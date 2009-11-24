@@ -388,14 +388,17 @@ namespace ConfBot.PlugIns
 			if (autoInsultMode) {
 				Random rndUser		= new Random(unchecked((int)DateTime.Now.Ticks));
 				Random rndMsg		= new Random(unchecked((int)DateTime.Now.Ticks));
+				
 				List<IJID> lstUsers	= new List<IJID>();
 				foreach(IRosterItem user in _jabberClient.Roster) {
-					if (user.status == UserStatus.OnLine) {
-						lstUsers.Add(user.JID);
-					}
+					lstUsers.Add(user.JID);
 				}
-				if (lstUsers.Count > 0) {
-					_jabberClient.SendMessage(lstUsers[rndUser.Next(lstUsers.Count)], Conference.botName + " ti manda un insulto gratuito: _" + insultDict[rndMsg.Next(insultDict.Count)] + "_");
+				
+				int userIdx = rndUser.Next(lstUsers.Count);
+				
+				if (_jabberClient.Roster[lstUsers[userIdx].Bare].status == UserStatus.OnLine)
+				{
+					_jabberClient.SendMessage(lstUsers[userIdx], Conference.botName + " ti manda un insulto gratuito: _" + insultDict[rndMsg.Next(insultDict.Count)] + "_");
 				}
 			}
 		}
