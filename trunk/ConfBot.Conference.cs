@@ -508,7 +508,7 @@ namespace ConfBot
 		{
 			ArrayList items = new ArrayList();
 			Random rnd = new Random(DateTime.Now.Millisecond);
-			int blockCounter = 0;
+			//int blockCounter = 0;
 			
 			//creo una lista riempita in ordine casuale
 			foreach (IRosterItem rosterItem in _jabbberClient.Roster)
@@ -525,12 +525,14 @@ namespace ConfBot
 					if (paBanned.IndexOf(rosterItem.JID.User) < 0)
 					{
 						_jabbberClient.SendMessage(rosterItem, msg);
+						/*
 						blockCounter++;
 						if (blockCounter >= USERS_PER_SENDING_BLOCK)
 						{
 							Thread.Sleep(FLOODING_SLEEP_TIME);
 							blockCounter = 0;
 						}
+						*/
 					}
 				}
 			}

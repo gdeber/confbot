@@ -17,29 +17,14 @@ using ConfBot.PlugIns;
 namespace ConfBot.PlugIns
 {
 	struct ToBeABadBoy {
-		public IJID	Boy {
-			get;
-			set;
-		}
-		public DateTime	TimeFirst {
-			get;
-			set;
-		}
-		public int Count {
-			get;
-			set;
-		}
+		public IJID			Boy;
+		public DateTime	TimeFirst;
+		public int			Count;
 	}
 
 	struct BadBoy {
-		public IJID	Boy {
-			get;
-			set;
-		}
-		public DateTime	TimeToSleep {
-			get;
-			set;
-		}
+		public IJID			Boy;
+		public DateTime	TimeToSleep;
 	}
 
 	/// <summary>
@@ -48,7 +33,7 @@ namespace ConfBot.PlugIns
 	[PlugInAttribute]
 	public class CleanMode : PlugIn
 	{
-		private const int MaxBadWord			= 10;
+		private const int MaxBadWord			= 5;
 		private const int MaxBadTime			= 30;
 		private const int SleepBadBoyTime	= 15;
 
@@ -65,7 +50,8 @@ namespace ConfBot.PlugIns
 		private List<BadBoy>			badBoys			= new List<BadBoy>();
 
 		Timer autoInsult;
-			
+		
+		#region Constructors
 		public CleanMode(IJabberClient jabberClient,IConfigManager configManager, ILogger logger) : base(jabberClient, configManager, logger) {
 			#region Command Initialization
 			BotCmd tempCmd;
@@ -124,6 +110,7 @@ namespace ConfBot.PlugIns
 				insultDict.Add(insultList[ndx]);
 			}
 		}
+		#endregion
 
 		#region Command Class override
 		private enum Commands {
@@ -312,10 +299,10 @@ namespace ConfBot.PlugIns
 				try {
 					#region BadBoy?
 					if (badBoysMode) {
-						foreach(BadBoy item in badBoys) {
-							if (item.Boy == msg.From) {
-								if (item.TimeToSleep < System.DateTime.Now) {
-									int ndx = badBoys.IndexOf(item);
+						foreach(BadBoy boy in badBoys) {
+							if (boy.Boy.Bare == msg.From.Bare) {
+								if (boy.TimeToSleep < System.DateTime.Now) {
+									int ndx = badBoys.IndexOf(boy);
 									badBoys.RemoveAt(ndx);
 									break;
 								} else {
@@ -333,34 +320,35 @@ namespace ConfBot.PlugIns
 					#region BadBoy routine
 					if (badBoysMode && (badWords > 0)) {
 						bool	found = false;
-						for(int ndx = 0; ndx < badBoysToBe.Count; ndx++) {
-							ToBeABadBoy	item = badBoysToBe[ndx];
-							if (item.Boy == msg.From) {
-								badBoysToBe.RemoveAt(ndx);
-								if (item.TimeFirst < (System.DateTime.Now - (new TimeSpan(0, MaxBadTime, 0)))) {
-									item.TimeFirst	= System.DateTime.Now;
-									item.Count	= badWords;
+						foreach(ToBeABadBoy thisItem in badBoysToBe) {
+							if (thisItem.Boy.Bare == msg.From.Bare) {
+								ToBeABadBoy	newItem = new ToBeABadBoy();
+								newItem = thisItem;
+								badBoysToBe.Remove(thisItem);
+								if (newItem.TimeFirst < (System.DateTime.Now - (new TimeSpan(0, MaxBadTime, 0)))) {
+									newItem.TimeFirst	= System.DateTime.Now;
+									newItem.Count	= badWords;
 								} else {
-									item.Count	+= badWords;
+									newItem.Count	+= badWords;
 								}
-								badBoysToBe.Add(item);
+								badBoysToBe.Add(newItem);
 								found = true;
 								break;
 							}
 						}
 						if (!found) {
-							ToBeABadBoy	item = new ToBeABadBoy();
-							item.Boy			= msg.From;
-							item.Count		= badWords;
-							item.TimeFirst	= System.DateTime.Now;
-							badBoysToBe.Add(item);
+							ToBeABadBoy	boy = new ToBeABadBoy();
+							boy.Boy			= msg.From;
+							boy.Count		= badWords;
+							boy.TimeFirst	= System.DateTime.Now;
+							badBoysToBe.Add(boy);
 						}
 						int ndxBad = (badBoysToBe.Count - 1);
 						if (badBoysToBe[ndxBad].Count > MaxBadWord) {
-							BadBoy	item		= new BadBoy();
-							item.Boy				= badBoysToBe[ndxBad].Boy;
-							item.TimeToSleep	= DateTime.Now + (new TimeSpan(0, SleepBadBoyTime, 0));
-							badBoys.Add(item);
+							BadBoy	boy		= new BadBoy();
+							boy.Boy				= badBoysToBe[ndxBad].Boy;
+							boy.TimeToSleep	= DateTime.Now + (new TimeSpan(0, SleepBadBoyTime, 0));
+							badBoys.Add(boy);
 							badBoysToBe.RemoveAt(ndxBad);
 							_jabberClient.SendMessage(msg.From, string.Format("You are a *Bad Boy*, be quiet for {0} minutes..", SleepBadBoyTime));
 							msgBody	= "";
