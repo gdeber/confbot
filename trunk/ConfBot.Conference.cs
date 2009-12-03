@@ -441,7 +441,6 @@ namespace ConfBot
 				}
 				else
 				{
-				
 					if ( (message.Error.Code == ErrorCode.ServiceUnavailable) &&
 					    (utenteSorgente.status == UserStatus.OnLine) )
 				    	{

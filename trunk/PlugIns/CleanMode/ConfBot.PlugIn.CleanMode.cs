@@ -34,8 +34,8 @@ namespace ConfBot.PlugIns
 	public class CleanMode : PlugIn
 	{
 		private const int MaxBadWord			= 5;
-		private const int MaxBadTime			= 30;
-		private const int SleepBadBoyTime	= 15;
+		private const int MaxBadTime			= 10;
+		private const int SleepBadBoyTime	= 5;
 
 		private bool cleanMode			= false;
 		private bool autoInsultMode	= true;
@@ -82,8 +82,14 @@ namespace ConfBot.PlugIns
 			// BadBoys Command
 			tempCmd.Command	= "badboys";
 			tempCmd.Code	= Convert.ToInt32(Commands.BadBoys);
-			tempCmd.Admin	= false;
+			tempCmd.Admin	= true;
 			tempCmd.Help	= "[on|off|list] attiva/disattiva la modalità BadBoys - elenca i BadBoys";
+			listCmd.Add(tempCmd);
+			// TimeLeft Command
+			tempCmd.Command	= "timeleft";
+			tempCmd.Code	= Convert.ToInt32(Commands.TimeLeft);
+			tempCmd.Admin	= false;
+			tempCmd.Help	= "In modalità BadBoys indica il tempo di ban rimanente";
 			listCmd.Add(tempCmd);
 			#endregion
 
@@ -118,7 +124,8 @@ namespace ConfBot.PlugIns
 			AutoInsult	= 2,
 			AddInsult	= 3,
 			Insult			= 4,
-			BadBoys	= 5
+			BadBoys	= 5,
+			TimeLeft		= 6
 		}
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
@@ -206,32 +213,56 @@ namespace ConfBot.PlugIns
 				case Commands.BadBoys	:	
 												switch (Param) {
 													case "on" 	:	badBoysMode	= true;
-																	_jabberClient.SendMessage(user, "*BadBoys Activated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("BadBoysMode", "on");
-																	break;
+																		_jabberClient.SendMessage(user, "*BadBoys Activated*");
+																		//ora lo salvo
+																		_configManager.SetSetting("BadBoysMode", "on");
+																		break;
 													case "off"	:	badBoysMode	= false;
-																	_jabberClient.SendMessage(user, "*BadBoys Deactivated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("BadBoysMode", "off");
-																	break;
+																		_jabberClient.SendMessage(user, "*BadBoys Deactivated*");
+																		//ora lo salvo
+																		_configManager.SetSetting("BadBoysMode", "off");
+																		break;
 													case "list"	:	badBoysMode	= false;
-																	string list	= "";
-																	foreach(BadBoy badBoy in badBoys) {
-																		list += badBoy.Boy.Bare + '\n';
-																	}
-																	if (list=="") {
-																		_jabberClient.SendMessage(user, "There are no BadBoys in the conference");
-																	} else {
-																		_jabberClient.SendMessage(user, "The BadBoys in conference are: \n" + list);
-																	}
+																		string list	= "";
+																		foreach(BadBoy badBoy in badBoys) {
+																			list += badBoy.Boy.Bare + '\n';
+																		}
+																		if (list=="") {
+																			_jabberClient.SendMessage(user, "There are no BadBoys in the conference");
+																		} else {
+																			_jabberClient.SendMessage(user, "The BadBoys in conference are: \n" + list);
+																		}
 																	break;
-													default		:	if (autoInsultMode) {
-																		_jabberClient.SendMessage(user, "_BadBoys is active_");
-																	} else {
-																		_jabberClient.SendMessage(user, "_BadBoys is not active_");
-																	}
-																	break;
+													default		:	if (badBoysMode) {
+																			_jabberClient.SendMessage(user, "_BadBoys is active_");
+																		} else {
+																			_jabberClient.SendMessage(user, "_BadBoys is not active_");
+																		}
+																		break;
+												}
+												break;
+				case Commands.TimeLeft	:	
+												if (!badBoysMode) {
+													_jabberClient.SendMessage(user, "_BadBoys is not active_");
+												} else {
+													bool	found	= false;
+													foreach(BadBoy boy in badBoys) {
+														if (boy.Boy.Bare == user.Bare) {
+															found	= true;
+															if (boy.TimeToSleep < System.DateTime.Now) {
+																int ndx = badBoys.IndexOf(boy);
+																badBoys.RemoveAt(ndx);
+																_jabberClient.SendMessage(user, "Great! The Exile is over!! For the future: be careful...");
+																break;
+															} else {
+																_jabberClient.SendMessage(user, "You are a bad boy! Sleep until " + boy.TimeToSleep.ToString());
+																break;
+															}
+														}
+													}
+													if (!found) {
+														_jabberClient.SendMessage(user, "You are not a bad boy");
+													}
 												}
 												break;
 			}
