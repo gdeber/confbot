@@ -602,15 +602,19 @@ namespace ConfBot
 		
 		private IRosterItem findItem(string user)
 		{
-			foreach (IRosterItem item in this)
-			{
-				if ( (item.JID.Bare.Equals(user, StringComparison.InvariantCultureIgnoreCase)) ||
-				    (item.Nickname.Equals(user, StringComparison.InvariantCultureIgnoreCase)) )
+			try {
+				foreach (IRosterItem item in this)
 				{
-					return item;
+					if ( (item.JID.Bare.Equals(user, StringComparison.InvariantCultureIgnoreCase)) ||
+					    (item.Nickname.Equals(user, StringComparison.InvariantCultureIgnoreCase)) )
+					{
+						return item;
+					}
 				}
+				return null;
+			} catch (Exception) {
+				return null;
 			}
-			return null;
 		}
 		
 		public bool IsReadOnly {
