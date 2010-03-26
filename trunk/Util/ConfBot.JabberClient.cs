@@ -22,7 +22,7 @@ using agsXMPP.protocol.iq.roster;
 using jabber.connection;
 using jabber.protocol.client;
 using jabber.protocol.iq;
-*/
+ */
 
 namespace ConfBot
 {
@@ -52,10 +52,11 @@ namespace ConfBot
 			_xmppConn.OnError += new ErrorHandler(_xmppConn_OnError);
 			_xmppConn.OnLogin += new ObjectHandler(_xmppConn_OnLogin);
 			_xmppConn.OnMessage += new agsXMPP.protocol.client.MessageHandler(_xmppConn_OnMessage);
-			_xmppConn.ClientSocket.OnValidateCertificate += new RemoteCertificateValidationCallback(_xmppConn_ClientSocket_OnValidateCertificate);			
+			_xmppConn.ClientSocket.OnValidateCertificate += new RemoteCertificateValidationCallback(_xmppConn_ClientSocket_OnValidateCertificate);
 			_xmppConn.OnPresence += new PresenceHandler(_xmppConn_OnPresence);
 			_xmppConn.OnRosterItem += new XmppClientConnection.RosterHandler(_xmppConn_OnRosterItem);
 			_xmppConn.OnRosterEnd += new ObjectHandler(_xmppConn_OnRosterEnd);
+			_xmppConn.OnSocketError += new ErrorHandler(_xmppConn_OnSocketError);
 			
 			//for debug purpose
 			_xmppConn.OnReadXml += new XmlHandler(_xmppConn_OnReadXml);
@@ -260,7 +261,7 @@ namespace ConfBot
 						friendList.Add(item.Jid.Bare.ToLowerInvariant(), friend);
 					}
 				}
-			} catch (Exception ex) {				
+			} catch (Exception ex) {
 				_logger.LogMessage(String.Format("error on Roster Item {0}: {1} ", item.Jid.Bare, ex.Message), LogLevel.Error);
 			}
 		}
@@ -272,6 +273,15 @@ namespace ConfBot
 			_xmppConn.Status = _statusMessage;
 			_xmppConn.Show = ShowType.NONE;
 			_xmppConn.SendMyPresence();
+		}
+		
+		void _xmppConn_OnSocketError(object sender, Exception ex)
+		{
+			_logger.LogMessage("Socket Error...", LogLevel.Error);
+			if (this.OnError != null)
+			{
+				this.OnError(sender, ex);
+			}
 		}
 		
 		#endregion
@@ -298,7 +308,7 @@ namespace ConfBot
 			set {
 				_statusMessage = value;
 				_xmppConn.Status = _statusMessage;
-				_xmppConn.SendMyPresence();				
+				_xmppConn.SendMyPresence();
 			}
 		}
 	}
@@ -468,7 +478,7 @@ namespace ConfBot
 		
 		public UserStatus status {
 			get {
-				if (_presences == null || this.PresencesSameType(PresenceType.unavailable) 
+				if (_presences == null || this.PresencesSameType(PresenceType.unavailable)
 				    || _presences.Count == 0)
 				{
 					return UserStatus.NotAvailable;
@@ -509,7 +519,7 @@ namespace ConfBot
 		
 		public void UpdatePresence(agsXMPP.protocol.client.Presence recvPres)
 		{
-			for (int presIdx = 0; presIdx<_presences.Count ; presIdx++ ) 
+			for (int presIdx = 0; presIdx<_presences.Count ; presIdx++ )
 			{
 				if (_presences[presIdx].From.Resource.Equals(recvPres.From.Resource))
 				{
