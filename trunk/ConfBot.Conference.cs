@@ -99,7 +99,7 @@ namespace ConfBot
 			// Help Command
 			tempCmd.Command	= "help";
 			tempCmd.Code	= Convert.ToInt32(Commands.Help);
-			tempCmd.Admin	= true;
+			tempCmd.Admin	= false;
 			tempCmd.Help	= "aiuto";
 			listCmd.Add(tempCmd);
 			// Help Command

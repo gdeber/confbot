@@ -122,48 +122,25 @@ namespace ConfBot
 			_xmppConn.ConnectServer = _configMgr.GetSetting("NetworkHost");
 			_xmppConn.Port = Int32.Parse(_configMgr.GetSetting("Port"));
 			_xmppConn.Resource = _configMgr.GetSetting("Resource");
+			_xmppConn.Priority = Int32.Parse(_configMgr.GetSetting("Priority"));
+			_xmppConn.UseSSL = bool.Parse(_configMgr.GetSetting("LegacySSL"));
+			_xmppConn.UseStartTLS = bool.Parse(_configMgr.GetSetting("StartTLS"));
+			_xmppConn.UseCompression = bool.Parse(_configMgr.GetSetting("Compression"));
+			_xmppConn.KeepAlive = bool.Parse(_configMgr.GetSetting("KeepAlive"));
+			
+			
 			
 			if (_configMgr.GetSetting("StatusMessage").Trim() != "")
 			{
 				_statusMessage =_configMgr.GetSetting("StatusMessage");
 			}
 			
-//			//Proxy settings
-//			if (_configMgr.GetSetting("ProxyHost").Trim() == "")
-//				_xmppCon
-//				_jabberClient.Proxy	= ProxyType.None;
-//			else
-//			{
-//				string proxyType;
-//				if ( (proxyType = _configMgr.GetSetting("ProxyType").Trim()) == "")
-//				{
-//					_jabberClient.Proxy	= ProxyType.Socks5;
-//				}
-//				else
-//				{
-//					if (proxyType.Equals("Socks5", StringComparison.InvariantCultureIgnoreCase))
-//					{
-//						_jabberClient.Proxy = ProxyType.Socks5;
-//					}
-//					if (proxyType.Equals("Socks4", StringComparison.InvariantCultureIgnoreCase))
-//					{
-//						_jabberClient.Proxy = ProxyType.Socks4;
-//					}
-//					if (proxyType.Equals("HTTP", StringComparison.InvariantCultureIgnoreCase))
-//					{
-//						_jabberClient.Proxy = ProxyType.HTTP;
-//					}
-//				}
-//				_jabberClient.ProxyHost = _configMgr.GetSetting("ProxyHost");
-//				_jabberClient.ProxyPort = Int32.Parse(_configMgr.GetSetting("ProxyPort"));
-//			}
 			
 			// don't do extra stuff, please.
 			_xmppConn.AutoPresence = false;
 			_xmppConn.AutoRoster = true;
-			_xmppConn.UseSSL = true;
 			_xmppConn.AutoResolveConnectServer = false;
-			_xmppConn.KeepAlive = true;
+			
 		}
 		
 		private bool isAdmin(string user)
