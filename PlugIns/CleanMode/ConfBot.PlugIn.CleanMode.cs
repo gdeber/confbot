@@ -123,9 +123,9 @@ namespace ConfBot.PlugIns
 			CleanMode	= 1,
 			AutoInsult	= 2,
 			AddInsult	= 3,
-			Insult			= 4,
-			BadBoys	= 5,
-			TimeLeft		= 6
+			Insult		= 4,
+			BadBoys		= 5,
+			TimeLeft	= 6
 		}
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
