@@ -7,12 +7,14 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
-using ConfBot.Types;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
+
 using ConfBot;
 using ConfBot.PlugIns;
+using ConfBot.Types;
 
 namespace ConfBot.PlugIns
 {
@@ -130,197 +132,232 @@ namespace ConfBot.PlugIns
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
 			switch((Commands)CodeCmd) {
-				case Commands.CleanMode		: 
-												switch (Param) {
-													case "on" 	:	cleanMode	= true;
-																	_jabberClient.SendMessage(user, "*CleanMode Activated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("CleanMode", "on");
-																	break;
-													case "off"	:	cleanMode	= false;
-																	_jabberClient.SendMessage(user, "*CleanMode Deactivated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("CleanMode", "off");
-																	break;
-													default		:	if (cleanMode) {
-																		_jabberClient.SendMessage(user, "_CleanMode is active_");
-																	} else {
-																		_jabberClient.SendMessage(user, "_CleanMode is not active_");
-																	}
-																	break;
-												}
-												break;
-				case Commands.AutoInsult	:	
-												switch (Param) {
-													case "on" 	:	autoInsultMode	= true;
-																	_jabberClient.SendMessage(user, "*AutoInsult Activated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("AutoInsultMode", "on");
-																	break;
-													case "off"	:	autoInsultMode	= false;
-																	_jabberClient.SendMessage(user, "*AutoInsult Deactivated*");
-																	//ora lo salvo
-																	_configManager.SetSetting("AutoInsultMode", "off");
-																	break;
-													default		:	if (autoInsultMode) {
-																		_jabberClient.SendMessage(user, "_AutoInsult is active_");
-																	} else {
-																		_jabberClient.SendMessage(user, "_AutoInsult is not active_");
-																	}
-																	break;
-												}
-												break;
-				case Commands.AddInsult		:	
-												if (Param.Trim() != "") {
-													string newDict = "";
-													insultDict.Add(Param);
-													for(int iNdx = 0; iNdx < insultDict.Count; iNdx++) {
-														newDict += insultDict[iNdx] + ',';
-													}							
-													newDict.Remove(insultDict.Count - 1);
-													this._configManager.SetSetting("InsultDictionary", newDict);
-													_jabberClient.SendMessage(user, "insult _" + Param + "_ addedd");
-												}
-												break;
+				case Commands.CleanMode		:
+					switch (Param) {
+							case "on" 	:	cleanMode	= true;
+							_jabberClient.SendMessage(user, "*CleanMode Activated*");
+							//ora lo salvo
+							_configManager.SetSetting("CleanMode", "on");
+							break;
+							case "off"	:	cleanMode	= false;
+							_jabberClient.SendMessage(user, "*CleanMode Deactivated*");
+							//ora lo salvo
+							_configManager.SetSetting("CleanMode", "off");
+							break;
+							default		:	if (cleanMode) {
+								_jabberClient.SendMessage(user, "_CleanMode is active_");
+							} else {
+								_jabberClient.SendMessage(user, "_CleanMode is not active_");
+							}
+							break;
+					}
+					break;
+				case Commands.AutoInsult	:
+					switch (Param) {
+							case "on" 	:	autoInsultMode	= true;
+							_jabberClient.SendMessage(user, "*AutoInsult Activated*");
+							//ora lo salvo
+							_configManager.SetSetting("AutoInsultMode", "on");
+							break;
+							case "off"	:	autoInsultMode	= false;
+							_jabberClient.SendMessage(user, "*AutoInsult Deactivated*");
+							//ora lo salvo
+							_configManager.SetSetting("AutoInsultMode", "off");
+							break;
+							default		:	if (autoInsultMode) {
+								_jabberClient.SendMessage(user, "_AutoInsult is active_");
+							} else {
+								_jabberClient.SendMessage(user, "_AutoInsult is not active_");
+							}
+							break;
+					}
+					break;
+				case Commands.AddInsult		:
+					if (Param.Trim() != "") {
+						string newDict = "";
+						insultDict.Add(Param);
+						for(int iNdx = 0; iNdx < insultDict.Count; iNdx++) {
+							newDict += insultDict[iNdx] + ',';
+						}
+						newDict.Remove(insultDict.Count - 1);
+						this._configManager.SetSetting("InsultDictionary", newDict);
+						_jabberClient.SendMessage(user, "insult _" + Param + "_ addedd");
+					}
+					break;
 				case Commands.Insult		:
-												if (Param.Trim() != "") {
-													string destMsg = "";
-													destMsg	= Param.ToUpper();
-													
-													IRosterItem userItem = _jabberClient.Roster[destMsg];
-													if (userItem != null)
-													{
-														switch (userItem.status) {
-																case UserStatus.Unknown		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
-																								break;
-																case UserStatus.Away		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is away.");
-																								break;
-																case UserStatus.NotAvailable	:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is offline.");
-																								break;
-																default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
-																								String insult	= insultDict[rnd.Next(insultDict.Count)];
-																								_jabberClient.SendMessage(userItem.JID, "_" + insult + "_");
-																								_jabberClient.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
-																								break;
-														}
-													}
-													else
-													{
-														_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
-													}
-												}
-												break;
-				case Commands.BadBoys	:	
-												switch (Param) {
-													case "on" 	:	badBoysMode	= true;
-																		_jabberClient.SendMessage(user, "*BadBoys Activated*");
-																		//ora lo salvo
-																		_configManager.SetSetting("BadBoysMode", "on");
-																		break;
-													case "off"	:	badBoysMode	= false;
-																		_jabberClient.SendMessage(user, "*BadBoys Deactivated*");
-																		//ora lo salvo
-																		_configManager.SetSetting("BadBoysMode", "off");
-																		break;
-													case "list"	:	badBoysMode	= false;
-																		string list	= "";
-																		foreach(BadBoy badBoy in badBoys) {
-																			list += badBoy.Boy.Bare + '\n';
-																		}
-																		if (list=="") {
-																			_jabberClient.SendMessage(user, "There are no BadBoys in the conference");
-																		} else {
-																			_jabberClient.SendMessage(user, "The BadBoys in conference are: \n" + list);
-																		}
-																	break;
-													default		:	if (badBoysMode) {
-																			_jabberClient.SendMessage(user, "_BadBoys is active_");
-																		} else {
-																			_jabberClient.SendMessage(user, "_BadBoys is not active_");
-																		}
-																		break;
-												}
-												break;
-				case Commands.TimeLeft	:	
-												if (!badBoysMode) {
-													_jabberClient.SendMessage(user, "_BadBoys is not active_");
-												} else {
-													bool	found	= false;
-													foreach(BadBoy boy in badBoys) {
-														if (boy.Boy.Bare == user.Bare) {
-															found	= true;
-															if (boy.TimeToSleep < System.DateTime.Now) {
-																int ndx = badBoys.IndexOf(boy);
-																badBoys.RemoveAt(ndx);
-																_jabberClient.SendMessage(user, "Great! The Exile is over!! For the future: be careful...");
-																break;
-															} else {
-																_jabberClient.SendMessage(user, "You are a bad boy! Sleep until " + boy.TimeToSleep.ToString());
-																break;
-															}
-														}
-													}
-													if (!found) {
-														_jabberClient.SendMessage(user, "You are not a bad boy");
-													}
-												}
-												break;
+					if (Param.Trim() != "") {
+						string destMsg = "";
+						destMsg	= Param.ToUpper();
+						
+						IRosterItem userItem = _jabberClient.Roster[destMsg];
+						if (userItem != null)
+						{
+							switch (userItem.status) {
+									case UserStatus.Unknown		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
+									break;
+									case UserStatus.Away		:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is away.");
+									break;
+									case UserStatus.NotAvailable	:	_jabberClient.SendMessage(user, "User _" + destMsg + "_ is offline.");
+									break;
+									default						:	Random rnd = new Random(unchecked((int)DateTime.Now.Ticks));
+									String insult	= insultDict[rnd.Next(insultDict.Count)];
+									_jabberClient.SendMessage(userItem.JID, "_" + insult + "_");
+									_jabberClient.SendMessage(user, Conference.botName + " send _" + insult + "_ to _" + Param + "_");
+									break;
+							}
+						}
+						else
+						{
+							_jabberClient.SendMessage(user, "User _" + destMsg + "_ not exist.");
+						}
+					}
+					break;
+				case Commands.BadBoys	:
+					switch (Param) {
+							case "on" 	:	badBoysMode	= true;
+							_jabberClient.SendMessage(user, "*BadBoys Activated*");
+							//ora lo salvo
+							_configManager.SetSetting("BadBoysMode", "on");
+							break;
+							case "off"	:	badBoysMode	= false;
+							_jabberClient.SendMessage(user, "*BadBoys Deactivated*");
+							//ora lo salvo
+							_configManager.SetSetting("BadBoysMode", "off");
+							break;
+							case "list"	:	badBoysMode	= false;
+							string list	= "";
+							foreach(BadBoy badBoy in badBoys) {
+								list += badBoy.Boy.Bare + '\n';
+							}
+							if (list=="") {
+								_jabberClient.SendMessage(user, "There are no BadBoys in the conference");
+							} else {
+								_jabberClient.SendMessage(user, "The BadBoys in conference are: \n" + list);
+							}
+							break;
+							default		:	if (badBoysMode) {
+								_jabberClient.SendMessage(user, "_BadBoys is active_");
+							} else {
+								_jabberClient.SendMessage(user, "_BadBoys is not active_");
+							}
+							break;
+					}
+					break;
+				case Commands.TimeLeft	:
+					if (!badBoysMode) {
+						_jabberClient.SendMessage(user, "_BadBoys is not active_");
+					} else {
+						bool	found	= false;
+						foreach(BadBoy boy in badBoys) {
+							if (boy.Boy.Bare == user.Bare) {
+								found	= true;
+								if (boy.TimeToSleep < System.DateTime.Now) {
+									int ndx = badBoys.IndexOf(boy);
+									badBoys.RemoveAt(ndx);
+									_jabberClient.SendMessage(user, "Great! The Exile is over!! For the future: be careful...");
+									break;
+								} else {
+									_jabberClient.SendMessage(user, "You are a bad boy! Sleep until " + boy.TimeToSleep.ToString());
+									break;
+								}
+							}
+						}
+						if (!found) {
+							_jabberClient.SendMessage(user, "You are not a bad boy");
+						}
+					}
+					break;
 			}
 			return true;
 		}
 		#endregion
 		
-		public bool CleanText(ref string messageText, ref int badWords) {
+//		public bool CleanText(ref string messageText, ref int badWords) {
+//			try {
+//				badWords			= 0;
+//				Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
+//				int		startPos	= 0;
+//				string		tmpIn		= messageText.ToUpper();
+//				string		tmpOut	= "";
+//				while (true) {
+//					while (startPos < tmpIn.Length) {
+//						if (charAlphaDict.IndexOf(tmpIn[startPos]) < 0)
+//							tmpOut	+= messageText[startPos];
+//						else {
+//							break;
+//						}
+//						startPos++;
+//					}
+//					int endPos = startPos;
+//					if (startPos < tmpIn.Length) {
+//						while (endPos < tmpIn.Length) {
+//							if (charAlphaDict.IndexOf(tmpIn[endPos]) < 0) {
+//								endPos--;
+//								break;
+//							} else {
+//								endPos++;
+//							}
+//						}
+//						if (endPos == tmpIn.Length) {
+//							endPos--;
+//						}
+//						if (endPos > startPos) {
+//							if (badWordDict.IndexOf(tmpIn.Substring(startPos, endPos - startPos + 1)) >= 0) {
+//								tmpOut	+= ("_" + goodDict[rnd.Next(goodDict.Length)] + "_");
+//								badWords++;
+//							} else {
+//								tmpOut	+= messageText.Substring(startPos, endPos - startPos + 1);
+//							}
+//						} else {
+//							tmpOut	+= messageText[startPos];
+//						}
+//					} else {
+//						break;
+//					}
+//					startPos = endPos + 1;
+//				}
+//				messageText = tmpOut;
+//				return true;
+//			} catch(Exception ex) {
+//				_logger.LogMessage(ex.Message, LogLevel.Error);
+//			}
+//			return false;
+//		}
+		
+		private bool CleanText(ref string messageText, ref int badWords)
+		{
+			const string PatternTemplate = @"\b({0})(s?)\b";
+			const RegexOptions Options = RegexOptions.IgnoreCase;
+			bool result = false;
+			
 			try {
-				badWords			= 0;
-				Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
-				int		startPos	= 0;
-				string		tmpIn		= messageText.ToUpper();
-				string		tmpOut	= "";
-				while (true) {
-					while (startPos < tmpIn.Length) {
-						if (charAlphaDict.IndexOf(tmpIn[startPos]) < 0)
-							tmpOut	+= messageText[startPos];
-						else {
-							break;	
-						}
-						startPos++;
+				foreach (string word in badWordDict)
+				{
+					string badWordPattern = string.Format(PatternTemplate, word);
+					MatchCollection matches =  Regex.Matches(messageText, badWordPattern, Options);
+					if (matches.Count > 0)
+					{
+						result = true;
+						messageText = Regex.Replace(messageText, badWordPattern, new MatchEvaluator(this.substBadWord), Options);
+						badWords++;
 					}
-					int endPos = startPos;
-					if (startPos < tmpIn.Length) {
-						while (endPos < tmpIn.Length) {
-							if (charAlphaDict.IndexOf(tmpIn[endPos]) < 0) {
-								endPos--;
-								break;
-							} else {
-								endPos++;
-							}
-						}
-						if (endPos == tmpIn.Length) {
-							endPos--;
-						}
-						if (endPos > startPos) {
-							if (badWordDict.IndexOf(tmpIn.Substring(startPos, endPos - startPos + 1)) >= 0) {
-								tmpOut	+= ("_" + goodDict[rnd.Next(goodDict.Length)] + "_");
-								badWords++;
-							} else {
-								tmpOut	+= messageText.Substring(startPos, endPos - startPos + 1);
-							}
-						} else {
-							tmpOut	+= messageText[startPos];
-						}
-					} else {
-						break;
-					}
-					startPos = endPos + 1;
+					
 				}
-				messageText = tmpOut;
-				return true;
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				_logger.LogMessage(ex.Message, LogLevel.Error);
 			}
-			return false;
+			
+			
+			return result;
 		}
+		
+		private string substBadWord(Match m)
+		{
+			Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
+			return "_" + goodDict[rnd.Next(goodDict.Length)] + "_";
+		}
+		
+		
 		
 		public override bool ElabMessage(ref IMessage msg, ref String newMsg) {
 			
@@ -339,7 +376,7 @@ namespace ConfBot.PlugIns
 								} else {
 									_jabberClient.SendMessage(msg.From, "Be Quiet !!!");
 									newMsg	= "";
-									return true;							
+									return true;
 								}
 							}
 						}
@@ -390,7 +427,7 @@ namespace ConfBot.PlugIns
 						newMsg	= msgBody;
 						if (newMsg != msg.Body) {
 							_jabberClient.SendMessage(msg.From, msgBody);
-							modified = true;							
+							modified = true;
 						}
 					}
 				}
@@ -400,7 +437,7 @@ namespace ConfBot.PlugIns
 			}
 			return modified;
 		}
-	
+		
 		private void SendAutoInsult(object stateInfo) {
 			int newTime = (new Random(unchecked((int)DateTime.Now.Ticks))).Next(300 * 1000, 3600 * 1000);
 			autoInsult.Change(newTime, newTime);
@@ -429,12 +466,12 @@ namespace ConfBot.PlugIns
 		
 		public override void StartThread() {
 			autoInsult =  new Timer(this.SendAutoInsult, null, 60000, 60000);
-		}		
+		}
 
 		public override void StopThread() {
 			autoInsult.Dispose();
-		}		
+		}
 		#endregion
-	
+		
 	}
 }

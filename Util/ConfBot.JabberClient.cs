@@ -15,8 +15,9 @@ using System.Xml;
 
 using agsXMPP;
 using agsXMPP.protocol.client;
-using ConfBot.Types;
 using agsXMPP.protocol.iq.roster;
+using agsXMPP.Xml.Dom;
+using ConfBot.Types;
 
 /*using jabber.client;
 using jabber.connection;
@@ -57,6 +58,7 @@ namespace ConfBot
 			_xmppConn.OnRosterItem += new XmppClientConnection.RosterHandler(_xmppConn_OnRosterItem);
 			_xmppConn.OnRosterEnd += new ObjectHandler(_xmppConn_OnRosterEnd);
 			_xmppConn.OnSocketError += new ErrorHandler(_xmppConn_OnSocketError);
+			_xmppConn.OnAuthError += new XmppElementHandler(_xmppConn_OnAuthError);
 			
 			//for debug purpose
 			_xmppConn.OnReadXml += new XmlHandler(_xmppConn_OnReadXml);
@@ -259,6 +261,16 @@ namespace ConfBot
 			{
 				this.OnError(sender, ex);
 			}
+		}
+		
+		void _xmppConn_OnAuthError(object sender, Element e)
+		{
+			_logger.LogMessage("Auth Error!", LogLevel.Error);
+			if (this.OnError != null)
+			{
+				this.OnError(sender, null);
+			}
+			
 		}
 		
 		#endregion

@@ -39,11 +39,6 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
-    <Reference Include="jabber-net">
-      <HintPath>..\..\dll_win\jabber-net.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -55,6 +50,7 @@
     <ProjectReference Include="..\..\ConferenceBot.csproj">
       <Project>{D8472D76-1BCE-42B1-BADE-F75619DCD631}</Project>
       <Name>ConferenceBot</Name>
+      <Private>False</Private>
     </ProjectReference>
     <Folder Include="Doc" />
     <Folder Include="Properties" />
