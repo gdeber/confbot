@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectGuid>{D8472D76-1BCE-42B1-BADE-F75619DCD631}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -7,8 +8,9 @@
     <RootNamespace>ConfBot</RootNamespace>
     <AssemblyName>ConferenceBot</AssemblyName>
     <StartArguments>AutmConference.config</StartArguments>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <SourceAnalysisOverrideSettingsFile>C:\Documents and Settings\gualtiero\Application Data\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -35,13 +37,19 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfBot.CmdMgr.cs" />
     <Compile Include="ConfBot.Conference.cs" />
-    <Compile Include="PlugIns\ConfBot.PlugIn.cs" />
-    <Compile Include="PlugIns\ConfBot.PlugIn.Mgr.cs" />
+    <Compile Include="Plugins\ConfBot.PlugIn.cs" />
+    <Compile Include="Plugins\ConfBot.PlugIn.Mgr.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util\ConfBot.ConfigManager.cs" />
     <Compile Include="Util\ConfBot.Interfaces.cs" />
@@ -49,12 +57,13 @@
     <Compile Include="Util\ConfBot.Lib.TextLib.cs" />
     <Compile Include="Util\ConfBot.Logger.cs" />
     <Compile Include="Util\ConfBot.Types.cs" />
+    <None Include="app.config" />
     <None Include="Doc\ConfBot.config" />
     <None Include="Doc\ConferenceBot.cd" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Doc" />
-    <Folder Include="PlugIns" />
+    <Folder Include="Plugins" />
     <Folder Include="Properties" />
     <Folder Include="Util" />
   </ItemGroup>
