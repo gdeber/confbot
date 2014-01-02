@@ -43,7 +43,7 @@ namespace ConfBot
 					_log.LogMessage("GetSetting " + E.Message, LogLevel.Error);
 				}
 			}
-			return "";
+			return string.Empty;
 		}
 		
 		public bool SetSetting(string settingName, string val)
