@@ -44,7 +44,7 @@ namespace ConfBot.PlugIns
 				{
 					if (((PlugIn) pluginList[Ndx]).IsThread()) {
 						Thread thr = new Thread(((PlugIn) pluginList[Ndx]).StartThread);
-						thr.Priority = ThreadPriority.BelowNormal;
+//						thr.Priority = ThreadPriority.BelowNormal;
 						thr.Start();
 					}
 				}

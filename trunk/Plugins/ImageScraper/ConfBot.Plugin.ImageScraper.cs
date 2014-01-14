@@ -27,6 +27,7 @@ namespace ConfBot.PlugIns
 		/// time between automatic image scraping (in minutes)
 		/// </summary>
 		private TimeSpan period;
+		private int periodMilliseconds;
 		private bool alternative = false;
 		
 		public ImageScraper(IJabberClient jabberClient,IConfigManager configManager, ILogger logger) : base(jabberClient, configManager, logger)
@@ -51,19 +52,20 @@ namespace ConfBot.PlugIns
 			tempCmd.Help	= "[add <keyword>| remove <keyword>| list] aggiunge, rimuove o elenca le keywords in uso";
 			listCmd.Add(tempCmd);
 			#endregion
-			Active	= (this._configManager.GetSetting("ImageScraper") == "on");
+			Active	= (this._configManager.GetSetting("ImageScraper").Equals("on", StringComparison.InvariantCultureIgnoreCase));
 			var periodStr = this._configManager.GetSetting("ImageScraperPeriod");
 			int periodInt;
 			if (periodStr != string.Empty && Int32.TryParse(periodStr, out periodInt))
 			{
 				period = new TimeSpan(0, periodInt, 0);
-				logger.LogMessage("Period set to: " + period.Minutes.ToString() + " Minutes" , LogLevel.Message);
+				logger.LogMessage("Period set to: " + period.TotalMinutes.ToString() + " Minutes" , LogLevel.Message);
 			}
 			else
 			{
 				period = new TimeSpan(0, 60, 0); ; //one image every hour
-				this._configManager.SetSetting("ImageScraperPeriod", period.Minutes.ToString());
+				this._configManager.SetSetting("ImageScraperPeriod", period.TotalMinutes.ToString());
 			}
+			periodMilliseconds = Convert.ToInt32(Math.Round(period.TotalMilliseconds));
 			var queryKeywordsCSV = (this._configManager.GetSetting("ImageScraperKeywords"));
 			if (queryKeywordsCSV != String.Empty)
 			{
@@ -87,11 +89,11 @@ namespace ConfBot.PlugIns
 			switch((Commands)CodeCmd) {
 				case Commands.ImageScraper		:
 					switch (Param) {
-							case "on" 	:	Active = false;
+							case "on" 	:	Active = true;
 							_jabberClient.SendMessage(user, "*ImageScraper Activated*");
 							//ora lo salvo
 							_configManager.SetSetting("ImageScraper", "on");
-							scrapeTimer = new Timer(this.scrapeImage, null, period.Milliseconds, period.Milliseconds);
+							scrapeTimer = new Timer(this.scrapeImage, null, periodMilliseconds, periodMilliseconds);
 							break;
 							case "off"	:	Active	= false;
 							scrapeTimer = new Timer(this.scrapeImage, null, Timeout.Infinite, Timeout.Infinite);
@@ -181,7 +183,7 @@ namespace ConfBot.PlugIns
 		}
 		
 		public override void StartThread() {
-			scrapeTimer = new Timer(this.scrapeImage, null, period.Milliseconds, period.Milliseconds);
+			scrapeTimer = new Timer(this.scrapeImage, null, periodMilliseconds, periodMilliseconds);
 		}
 
 		public override void StopThread() {
@@ -192,6 +194,7 @@ namespace ConfBot.PlugIns
 		private void scrapeImage(object stateInfo) {
 			if (Active)
 			{
+				_logger.LogMessage("Automatic scraping...", LogLevel.Message);
 				this.doScraping();
 			}
 		}
