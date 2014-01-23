@@ -24,36 +24,40 @@ namespace ConfBot.PlugIns
 	/// </summary>
 	public static class BingImageScraper
 	{
-		private const string bingQueryUrl = @"http://it.bing.com/images/search?q={0}&SafeSearch=off";
+		private const string bingQueryUrl = @"http://www.bing.com/images/async?q={0}&first={1}&count=100&safesearch=off";
 		private const string userAgent = @"Mozilla/5.0 (Windows NT 6.2; rv:22.0) Gecko/20130405 Firefox/23.0";
 		private const string imgurlRegex = @"\bimgurl:""(?<url>.+?)"",";
 		
-		public static IEnumerable<Uri> GetImages(string query)
+		public static IEnumerable<Uri> GetImages(string keyword, int iterations = 7)
 		{
 			ServicePointManager.ServerCertificateValidationCallback = Validator;
-			var searchQueryUrl = string.Format(bingQueryUrl, HttpUtility.HtmlEncode(query));
-			var oReq = (HttpWebRequest)WebRequest.Create(searchQueryUrl);
-			oReq.UserAgent = userAgent;
-			var resp = (HttpWebResponse)oReq.GetResponse();
-			var resultStream = resp.GetResponseStream();
 			
-			var doc = new HtmlDocument();
-			doc.Load(resultStream);
-			foreach (HtmlNode link in doc.DocumentNode.SelectNodes(@"//a[@href]"))
-			{
-				HtmlAttribute att = link.Attributes["m"];
-				if (att == null) continue;
+			for (int i = 0; i < iterations; i+=1) {
 				
-				if (att.Value.Contains("imgurl"))
+				var searchQueryUrl = string.Format(bingQueryUrl, HttpUtility.HtmlEncode(keyword), (i*100));
+				var oReq = (HttpWebRequest)WebRequest.Create(searchQueryUrl);
+				oReq.UserAgent = userAgent;
+				var resp = (HttpWebResponse)oReq.GetResponse();
+				var resultStream = resp.GetResponseStream();
+				
+				var doc = new HtmlDocument();
+				doc.Load(resultStream);
+				foreach (HtmlNode link in doc.DocumentNode.SelectNodes(@"//a[@href]"))
 				{
-					var decodedAtt = HttpUtility.HtmlDecode(att.Value);
-					var queryDictionary = HttpUtility.ParseQueryString(decodedAtt, Encoding.UTF8);
-					var match = Regex.Match(decodedAtt, imgurlRegex);
+					HtmlAttribute att = link.Attributes["m"];
+					if (att == null) continue;
 					
-					if (match != null)
+					if (att.Value.Contains("imgurl"))
 					{
-						var imgUrl = match.Groups["url"].Value;
-						yield return new Uri(imgUrl);
+						var decodedAtt = HttpUtility.HtmlDecode(att.Value);
+						var queryDictionary = HttpUtility.ParseQueryString(decodedAtt, Encoding.UTF8);
+						var match = Regex.Match(decodedAtt, imgurlRegex);
+						
+						if (match != null)
+						{
+							var imgUrl = match.Groups["url"].Value;
+							yield return new Uri(imgUrl);
+						}
 					}
 				}
 			}

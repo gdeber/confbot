@@ -93,10 +93,12 @@ namespace ConfBot.PlugIns
 							_jabberClient.SendMessage(user, "*ImageScraper Activated*");
 							//ora lo salvo
 							_configManager.SetSetting("ImageScraper", "on");
-							scrapeTimer = new Timer(this.scrapeImage, null, periodMilliseconds, periodMilliseconds);
+							//scrapeTimer = new Timer(this.scrapeImage, null, periodMilliseconds, periodMilliseconds);
+							this.StartThread();
 							break;
 							case "off"	:	Active	= false;
-							scrapeTimer = new Timer(this.scrapeImage, null, Timeout.Infinite, Timeout.Infinite);
+							//scrapeTimer = new Timer(this.scrapeImage, null, Timeout.Infinite, Timeout.Infinite);
+							this.StopThread();
 							_jabberClient.SendMessage(user, "*ImageScraper Deactivated*");
 							//ora lo salvo
 							_configManager.SetSetting("ImageScraper", "off");
@@ -183,7 +185,9 @@ namespace ConfBot.PlugIns
 		}
 		
 		public override void StartThread() {
-			scrapeTimer = new Timer(this.scrapeImage, null, periodMilliseconds, periodMilliseconds);
+			var randomMillisecond = new Random().Next(this.periodMilliseconds / 2, this.periodMilliseconds + 1);
+			_logger.LogMessage(String.Format( "Next Scraping due in {0} milliseconds" , randomMillisecond), LogLevel.Message);
+			scrapeTimer = new Timer(this.scrapeImage, null, randomMillisecond, Timeout.Infinite);
 		}
 
 		public override void StopThread() {
@@ -196,6 +200,9 @@ namespace ConfBot.PlugIns
 			{
 				_logger.LogMessage("Automatic scraping...", LogLevel.Message);
 				this.doScraping();
+				var randomMillisecond = new Random().Next(this.periodMilliseconds / 2, this.periodMilliseconds + 1);
+				_logger.LogMessage(String.Format( "Next Scraping due in {0} milliseconds" , randomMillisecond), LogLevel.Message);
+				scrapeTimer.Change(randomMillisecond, Timeout.Infinite);
 			}
 		}
 		

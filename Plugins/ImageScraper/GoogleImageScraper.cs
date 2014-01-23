@@ -25,32 +25,35 @@ namespace ConfBot.PlugIns
 	{
 		
 		//private const string googleQueryUrl = "http://www.google.it/search?tbm=isch&q={0}&oq={0}&safe=off";
-		private const string googleQueryUrl = "http://www.google.it/search?tbm=isch&q={0}&safe=off";
+		private const string googleQueryUrl = "http://www.google.it/search?tbm=isch&q={0}&safe=off&ijn=1&start={1}";
 		private const string userAgent = @"Mozilla/5.0 (Windows NT 6.2; rv:22.0) Gecko/20130405 Firefox/23.0";
 		
-		public static IEnumerable<Uri> GetImages(string query)
+		public static IEnumerable<Uri> GetImages(string keyword, int iterations = 7)
 		{
 			ServicePointManager.ServerCertificateValidationCallback = Validator;
-			var searchQueryUrl = string.Format(googleQueryUrl, HttpUtility.HtmlEncode(query));
-			var oReq = (HttpWebRequest)WebRequest.Create(searchQueryUrl);
-			oReq.UserAgent = userAgent;
-			var resp = (HttpWebResponse)oReq.GetResponse();
-			var resultStream = resp.GetResponseStream();
 			
-			var doc = new HtmlDocument();
-			doc.Load(resultStream);
-			foreach (HtmlNode link in doc.DocumentNode.SelectNodes(@"//a[@href]"))
-			{
-				HtmlAttribute att = link.Attributes["href"];
-				if (att == null) continue;
+			for (int i = 0; i < iterations; i+=1) {
+				var searchQueryUrl = string.Format(googleQueryUrl, HttpUtility.HtmlEncode(keyword), (i*100));
+				var oReq = (HttpWebRequest)WebRequest.Create(searchQueryUrl);
+				oReq.UserAgent = userAgent;
+				var resp = (HttpWebResponse)oReq.GetResponse();
+				var resultStream = resp.GetResponseStream();
 				
-				if (att.Value.Contains("imgurl"))
+				var doc = new HtmlDocument();
+				doc.Load(resultStream);
+				foreach (HtmlNode link in doc.DocumentNode.SelectNodes(@"//a[@href]"))
 				{
-					string queryString = new System.Uri(att.Value).Query;
-					var decodedString = HttpUtility.HtmlDecode(queryString);
-					var queryDictionary = HttpUtility.ParseQueryString(decodedString, Encoding.UTF8);
-					var imgUrl = queryDictionary["imgurl"];
-					yield return new Uri(imgUrl);
+					HtmlAttribute att = link.Attributes["href"];
+					if (att == null) continue;
+					
+					if (att.Value.Contains("imgurl"))
+					{
+						//string queryString = new System.Uri(att.Value).Query;
+						var decodedString = HttpUtility.HtmlDecode(att.Value);
+						var queryDictionary = HttpUtility.ParseQueryString(decodedString, Encoding.UTF8);
+						var imgUrl = queryDictionary["imgurl"];
+						yield return new Uri(imgUrl);
+					}
 				}
 			}
 		}
