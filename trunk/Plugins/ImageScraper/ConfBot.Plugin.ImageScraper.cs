@@ -44,12 +44,12 @@ namespace ConfBot.PlugIns
 			tempCmd.Command	= "scrape";
 			tempCmd.Code	= Convert.ToInt32(Commands.Scrape);
 			tempCmd.Admin	= false;
-			tempCmd.Help	= "fornisce un link di un'immagine";
+			tempCmd.Help	= "[keyword] fornisce un link di un'immagine";
 			listCmd.Add(tempCmd);
 			tempCmd.Command	= "scrapekeywords";
 			tempCmd.Code	= Convert.ToInt32(Commands.ScrapeKeywords);
 			tempCmd.Admin	= true;
-			tempCmd.Help	= "[add <keyword>| remove <keyword>| list] aggiunge, rimuove o elenca le keywords in uso";
+			tempCmd.Help	= "<add <keyword>| remove <keyword>| list> aggiunge, rimuove o elenca le keywords in uso";
 			listCmd.Add(tempCmd);
 			#endregion
 			Active	= (this._configManager.GetSetting("ImageScraper").Equals("on", StringComparison.InvariantCultureIgnoreCase));
@@ -116,13 +116,18 @@ namespace ConfBot.PlugIns
 					}
 					break;
 				case Commands.Scrape:
-					if (!this.doScraping())
+					var splittedParams = splitWhilePreservingQuotedValues(Param, ' ');
+					if (splittedParams.Length > 1)
+					{
+						_jabberClient.SendMessage(user, "usage: /scrape [keyword]");
+					}
+					else if (!this.doScraping(splittedParams.Length == 1? splittedParams[0]:null))
 					{
 						_jabberClient.SendMessage(user, "Cannot scrape image, sorry");
 					}
 					break;
 				case Commands.ScrapeKeywords:
-					var splittedParams = splitWhilePreservingQuotedValues(Param, ' ');
+					splittedParams = splitWhilePreservingQuotedValues(Param, ' ');
 					if (splittedParams.Length > 0)
 					{
 						if (splittedParams[0].Equals("list",StringComparison.InvariantCultureIgnoreCase))
@@ -206,11 +211,12 @@ namespace ConfBot.PlugIns
 			}
 		}
 		
-		private bool doScraping()
+		private bool doScraping(string keyword = null)
 		{
 			if (queryKeywords.Count != 0)
 			{
-				var imgUri = this.getImageUri();
+				
+				var imgUri = keyword == null? this.getImageUri(): this.getImageUri(keyword);
 				if (imgUri != String.Empty)
 				{
 					foreach(IRosterItem user in _jabberClient.Roster) {
@@ -232,7 +238,13 @@ namespace ConfBot.PlugIns
 			var rnd = new Random();
 			var rndIdx = rnd.Next(0,queryKeywords.Count);
 			var keyword = queryKeywords.ElementAt(rndIdx);
+			return this.getImageUri(keyword);
+		}
+		
+		private string getImageUri(string keyword)
+		{
 			List<Uri> imgLinks;
+			
 			if (alternative)
 			{
 				_logger.LogMessage("Scrape Google Image With Keyword: " + keyword, LogLevel.Message);
@@ -248,8 +260,8 @@ namespace ConfBot.PlugIns
 			
 			if (imgLinks.Count > 0 )
 			{
-				
-				rndIdx = rnd.Next(0, imgLinks.Count);
+				var rnd = new Random();
+				var rndIdx = rnd.Next(0, imgLinks.Count);
 				var imgUri = imgLinks.ElementAt(rndIdx);
 				
 				return imgUri.AbsoluteUri;
