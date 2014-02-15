@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -47,6 +48,7 @@ namespace ConfBot.PlugIns
 		
 		private List<char>				charAlphaDict	= new List<char>();
 		private List<string>				badWordDict	= new List<string>();
+		private List<string>				goodWordDict	= new List<string>();
 		private List<string>				insultDict		= new List<string>();
 		private List<ToBeABadBoy>	badBoysToBe	= new List<ToBeABadBoy>();
 		private List<BadBoy>			badBoys			= new List<BadBoy>();
@@ -93,6 +95,18 @@ namespace ConfBot.PlugIns
 			tempCmd.Admin	= false;
 			tempCmd.Help	= "In modalità BadBoys indica il tempo di ban rimanente";
 			listCmd.Add(tempCmd);
+			// badword command
+			tempCmd.Command	= "badwords";
+			tempCmd.Code	= Convert.ToInt32(Commands.BadWords);
+			tempCmd.Admin	= true;
+			tempCmd.Help	= "<add <badword>| remove <badword>| list> aggiunge, rimuove o elenca le parole sporche in uso";
+			listCmd.Add(tempCmd);
+			// goodwords command
+			tempCmd.Command	= "goodwords";
+			tempCmd.Code	= Convert.ToInt32(Commands.GoodWords);
+			tempCmd.Admin	= true;
+			tempCmd.Help	= "<add <goodword>| remove <goodword>| list> aggiunge, rimuove o elenca le parole buone in uso";
+			listCmd.Add(tempCmd);
 			#endregion
 
 			char[] charAlpha = {'Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','ì','è','é','ò','à','ù'};
@@ -105,13 +119,20 @@ namespace ConfBot.PlugIns
 			badBoysMode	= (this._configManager.GetSetting("BadBoysMode") == "on");
 			//bad Dictionary
 			badDict		= this._configManager.GetSetting("BadDictionary").Split(',');
-			for (int ndx = 0; ndx < badDict.Length; ndx++) {
-				if (badWordDict.IndexOf(badDict[ndx].ToUpper()) < 0) {
-					badWordDict.Add(badDict[ndx].ToUpper());
+			foreach (var word in badDict) {
+				if (!badWordDict.Exists(x=>x.Equals(word, StringComparison.InvariantCultureIgnoreCase)))
+				{
+					badWordDict.Add(word);
 				}
 			}
 			//good Dictionary
 			goodDict	= this._configManager.GetSetting("GoodDictionary").Split(',');
+			foreach (var word in goodDict) {
+				if (!goodWordDict.Exists(x=>x.Equals(word, StringComparison.InvariantCultureIgnoreCase)))
+				{
+					goodWordDict.Add(word);
+				}
+			}
 			//insult Dictionary
 			string[] insultList	= this._configManager.GetSetting("InsultDictionary").Split(',');
 			for (int ndx = 0; ndx < insultList.Length; ndx++) {
@@ -127,7 +148,9 @@ namespace ConfBot.PlugIns
 			AddInsult	= 3,
 			Insult		= 4,
 			BadBoys		= 5,
-			TimeLeft	= 6
+			TimeLeft	= 6,
+			BadWords	= 7,
+			GoodWords	= 8
 		}
 		
 		public override bool ExecCommand(IJID user, int CodeCmd, string Param) {
@@ -267,96 +290,124 @@ namespace ConfBot.PlugIns
 						}
 					}
 					break;
+				case Commands.BadWords:
+					var splittedParams = Param.Split(' ');
+					if (splittedParams.Length > 0)
+					{
+						if (splittedParams[0].Equals("list",StringComparison.InvariantCultureIgnoreCase))
+						{
+							_jabberClient.SendMessage(user, "badwords currently in use: " + String.Join(",", badWordDict));
+						}
+						else if (splittedParams[0].Equals("add",StringComparison.InvariantCultureIgnoreCase)) {
+							if (splittedParams.Length == 2)
+							{
+								if (!badWordDict.Exists(x=>x.Equals(splittedParams[1], StringComparison.InvariantCultureIgnoreCase)))
+								{
+									badWordDict.Add(splittedParams[1]);
+									_configManager.SetSetting("BadDictionary", String.Join(",", badWordDict));
+									_jabberClient.SendMessage(user, "badword added: " + splittedParams[1]);
+								}
+								else
+								{
+									_jabberClient.SendMessage(user, "badword already present!");
+								}
+							}
+							else
+							{
+								_jabberClient.SendMessage(user, "usage add <badword>:");
+							}
+						}
+						else if (splittedParams[0].Equals("remove",StringComparison.InvariantCultureIgnoreCase)) {
+							if (splittedParams.Length == 2)
+							{
+								if (badWordDict.Exists(x=>x.Equals(splittedParams[1], StringComparison.InvariantCultureIgnoreCase)))
+								{
+									badWordDict.Remove(splittedParams[1]);
+									_configManager.SetSetting("BadDictionary", String.Join(",", badWordDict));
+									_jabberClient.SendMessage(user, "badword removed: " + splittedParams[1]);
+								}
+								else
+								{
+									_jabberClient.SendMessage(user, "badword not found!");
+								}
+							}
+							else
+							{
+								_jabberClient.SendMessage(user, "usage remove <badword>:");
+							}
+						}
+					}
+					else
+					{
+						_jabberClient.SendMessage(user, "usage: /badwords [add <badword>| remove <badword>| list]");
+					}
+					break;
+				case Commands.GoodWords:
+					splittedParams = Param.Split(' ');
+					if (splittedParams.Length > 0)
+					{
+						if (splittedParams[0].Equals("list",StringComparison.InvariantCultureIgnoreCase))
+						{
+							_jabberClient.SendMessage(user, "goodwords currently in use: " + String.Join(",", goodWordDict));
+						}
+						else if (splittedParams[0].Equals("add",StringComparison.InvariantCultureIgnoreCase)) {
+							if (splittedParams.Length == 2)
+							{
+								if (!goodWordDict.Exists(x=>x.Equals(splittedParams[1], StringComparison.InvariantCultureIgnoreCase)))
+								{
+									goodWordDict.Add(splittedParams[1]);
+									_configManager.SetSetting("GoodDictionary", String.Join(",", goodWordDict));
+									_jabberClient.SendMessage(user, "goodword added: " + splittedParams[1]);
+								}
+								else
+								{
+									_jabberClient.SendMessage(user, "goodword already present!");
+								}
+							}
+							else
+							{
+								_jabberClient.SendMessage(user, "usage add <goodword>:");
+							}
+						}
+						else if (splittedParams[0].Equals("remove",StringComparison.InvariantCultureIgnoreCase)) {
+							if (splittedParams.Length == 2)
+							{
+								if (goodWordDict.Exists(x=>x.Equals(splittedParams[1], StringComparison.InvariantCultureIgnoreCase)))
+								{
+									goodWordDict.Remove(splittedParams[1]);
+									_configManager.SetSetting("GoodDictionary", String.Join(",", goodWordDict));
+									_jabberClient.SendMessage(user, "goodword removed: " + splittedParams[1]);
+								}
+								else
+								{
+									_jabberClient.SendMessage(user, "goodword not found!");
+								}
+							}
+							else
+							{
+								_jabberClient.SendMessage(user, "usage remove <goodword>:");
+							}
+						}
+					}
+					else
+					{
+						_jabberClient.SendMessage(user, "usage: /goodwords [add <goodword>| remove <goodword>| list]");
+					}
+					break;
 			}
 			return true;
 		}
 		#endregion
-		
-//		public bool CleanText(ref string messageText, ref int badWords) {
-//			try {
-//				badWords			= 0;
-//				Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
-//				int		startPos	= 0;
-//				string		tmpIn		= messageText.ToUpper();
-//				string		tmpOut	= "";
-//				while (true) {
-//					while (startPos < tmpIn.Length) {
-//						if (charAlphaDict.IndexOf(tmpIn[startPos]) < 0)
-//							tmpOut	+= messageText[startPos];
-//						else {
-//							break;
-//						}
-//						startPos++;
-//					}
-//					int endPos = startPos;
-//					if (startPos < tmpIn.Length) {
-//						while (endPos < tmpIn.Length) {
-//							if (charAlphaDict.IndexOf(tmpIn[endPos]) < 0) {
-//								endPos--;
-//								break;
-//							} else {
-//								endPos++;
-//							}
-//						}
-//						if (endPos == tmpIn.Length) {
-//							endPos--;
-//						}
-//						if (endPos > startPos) {
-//							if (badWordDict.IndexOf(tmpIn.Substring(startPos, endPos - startPos + 1)) >= 0) {
-//								tmpOut	+= ("_" + goodDict[rnd.Next(goodDict.Length)] + "_");
-//								badWords++;
-//							} else {
-//								tmpOut	+= messageText.Substring(startPos, endPos - startPos + 1);
-//							}
-//						} else {
-//							tmpOut	+= messageText[startPos];
-//						}
-//					} else {
-//						break;
-//					}
-//					startPos = endPos + 1;
-//				}
-//				messageText = tmpOut;
-//				return true;
-//			} catch(Exception ex) {
-//				_logger.LogMessage(ex.Message, LogLevel.Error);
-//			}
-//			return false;
-//		}
+
 		
 		private bool CleanText(ref string messageText, ref int badWords)
 		{
-			const string PatternTemplate = @"\b({0})(s?)\b";
-			const RegexOptions Options = RegexOptions.IgnoreCase;
-			bool result = false;
-			
-			try {
-				foreach (string word in badWordDict)
-				{
-					string badWordPattern = string.Format(PatternTemplate, word);
-					MatchCollection matches =  Regex.Matches(messageText, badWordPattern, Options);
-					if (matches.Count > 0)
-					{
-						result = true;
-						messageText = Regex.Replace(messageText, badWordPattern, new MatchEvaluator(this.substBadWord), Options);
-						badWords++;
-					}
-					
-				}
-			} catch (Exception ex) {
-				_logger.LogMessage(ex.Message, LogLevel.Error);
-			}
-			
-			
-			return result;
+			var bwc = new BadWordsCleaner(badWordDict, goodWordDict);
+			var cleanedText = bwc.CleanText(messageText, out badWords);
+			messageText = cleanedText;
+			_logger.LogMessage(String.Format("Removed {0} badwords", badWords), LogLevel.Message);
+			return (badWords > 0);
 		}
-		
-		private string substBadWord(Match m)
-		{
-			Random	rnd		= new Random(unchecked((int)DateTime.Now.Ticks));
-			return "_" + goodDict[rnd.Next(goodDict.Length)] + "_";
-		}
-		
 		
 		
 		public override bool ElabMessage(ref IMessage msg, ref String newMsg) {
