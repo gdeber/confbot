@@ -51,8 +51,11 @@ namespace ConfBot.PlugIns
 						//string queryString = new System.Uri(att.Value).Query;
 						var decodedString = HttpUtility.HtmlDecode(att.Value);
 						var queryDictionary = HttpUtility.ParseQueryString(decodedString, Encoding.UTF8);
-						var imgUrl = queryDictionary["imgurl"];
-						yield return new Uri(imgUrl);
+						var imgUrl = queryDictionary["/imgres?imgurl"];
+						if (imgUrl != null)
+						{
+							yield return new Uri(imgUrl);
+						}
 					}
 				}
 			}
