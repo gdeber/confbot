@@ -19,6 +19,7 @@ namespace ConfBot.PlugIns
 	/// </summary>
 	public class BadWordsCleaner
 	{
+		private const string linkRegexExp = @"\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))";
 		private List<string> badWords;
 		private List<string> goodWords;
 		private string badWordsRegexExp;
@@ -69,9 +70,11 @@ namespace ConfBot.PlugIns
 		{
 			this.rndGen = new Random();
 			var badWordsRegex = new Regex(this.badWordsRegexExp, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+			var linksRegex = new Regex(linkRegexExp, RegexOptions.Multiline | RegexOptions.IgnoreCase);
 			var matches = badWordsRegex.Matches(text);
+			var readonlyMatches = linksRegex.Matches(text);
 			badWordCount = matches.Count;
-			var result = badWordsRegex.Replace(text, this.badwordMatchEvaluator);
+			var result = badWordsRegex.Replace(text, match=>this.badwordMatchEvaluator(match, readonlyMatches));
 			return result;
 		}
 		
@@ -88,10 +91,21 @@ namespace ConfBot.PlugIns
 			return @"\b(" + string.Join("|", wordToken) + @")";
 		}
 		
-		private string badwordMatchEvaluator(Match match)
+		private string badwordMatchEvaluator(Match match, MatchCollection readonlyMatches)
 		{
+			if (readonlyMatches.Count > 0)
+			{
+				var readonlyMatchList = readonlyMatches.Cast<Match>().ToList();
+				if (readonlyMatchList.Exists(x=>((match.Index >= x.Index) && (match.Index <= (x.Index + x.Length)))))
+				{
+					return match.Value;
+				}
+			}
+			
+			
 			int randomIdx = rndGen.Next(0, this.goodWords.Count);
 			return "_"+this.goodWords[randomIdx]+"_";
+			
 		}
 	}
 }
